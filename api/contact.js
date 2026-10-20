@@ -22,6 +22,18 @@ export const POST = handle(async (request) => {
 
 export const GET = handle(async (request) => {
   await requireAdmin(request);
+
+  // ?summary=1: resumen liviano para los avisos del panel.
+  if (new URL(request.url).searchParams.has("summary")) {
+    const [counts] = await query(
+      "SELECT count(*) FILTER (WHERE NOT read)::int AS unread, COALESCE(max(id), 0)::int AS last_id FROM messages"
+    );
+    const [latest] = await query(
+      "SELECT id, name, subject FROM messages WHERE NOT read ORDER BY id DESC LIMIT 1"
+    );
+    return json({ ...counts, latest: latest || null });
+  }
+
   return json(await query("SELECT * FROM messages ORDER BY created_at DESC LIMIT 500"));
 });
 

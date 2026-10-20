@@ -1,12 +1,27 @@
 import { useState } from "react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/contexts";
+import { useMessageAlerts } from "./useMessageAlerts";
+
+function CountBadge({ count, label }) {
+  if (!count) return null;
+  return (
+    <span className="nav-badge" aria-label={`${count} ${label}`}>
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
 
 function PanelLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+  const isAdmin = user.role === "admin";
+  const messages = useMessageAlerts(isAdmin);
+  // El aviso emergente no se muestra si ya estás viendo los mensajes.
+  const showAlert = messages.alert && pathname !== "/panel/mensajes";
 
   async function handleLogout() {
     await logout();
@@ -29,6 +44,7 @@ function PanelLayout() {
             aria-controls="panel-nav"
           >
             Menú
+            <CountBadge count={messages.unread} label="mensajes sin leer" />
           </button>
         </div>
 
@@ -38,13 +54,16 @@ function PanelLayout() {
           </NavLink>
           <span className="panel-nav-title">Corredor</span>
           <NavLink to="/panel/cotizar">Nueva cotización</NavLink>
-          <NavLink to="/panel/cotizaciones">{user.role === "admin" ? "Cotizaciones" : "Mis cotizaciones"}</NavLink>
-          {user.role === "admin" && (
+          <NavLink to="/panel/cotizaciones">{isAdmin ? "Cotizaciones" : "Mis cotizaciones"}</NavLink>
+          {isAdmin && (
             <>
               <span className="panel-nav-title">Administración</span>
               <NavLink to="/panel/propiedades">Propiedades</NavLink>
               <NavLink to="/panel/usuarios">Corredores y usuarios</NavLink>
-              <NavLink to="/panel/mensajes">Mensajes</NavLink>
+              <NavLink to="/panel/mensajes">
+                Mensajes
+                <CountBadge count={messages.unread} label="sin leer" />
+              </NavLink>
               <NavLink to="/panel/empresa">Datos de la empresa</NavLink>
             </>
           )}
@@ -55,7 +74,7 @@ function PanelLayout() {
 
         <div className="panel-user">
           <strong>{user.name}</strong>
-          <span>{user.role === "admin" ? "Administrador" : user.position}</span>
+          <span>{isAdmin ? "Administrador" : user.position}</span>
           <br />
           <button type="button" onClick={handleLogout}>
             Cerrar sesión
@@ -64,8 +83,26 @@ function PanelLayout() {
       </aside>
 
       <main className="panel-main">
-        <Outlet />
+        <Outlet context={{ refreshMessages: messages.refresh, unreadMessages: messages.unread }} />
       </main>
+
+      {showAlert && (
+        <div className="toast" role="status" aria-live="polite">
+          <span className="toast-icon" aria-hidden="true">
+            ✉️
+          </span>
+          <div>
+            <strong>Nuevo mensaje de {messages.alert.name}</strong>
+            {messages.alert.subject && <small>{messages.alert.subject}</small>}
+            <Link to="/panel/mensajes" onClick={messages.dismiss}>
+              Ver mensajes →
+            </Link>
+          </div>
+          <button type="button" className="toast-close" onClick={messages.dismiss} aria-label="Cerrar aviso">
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 }

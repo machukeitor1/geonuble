@@ -1,16 +1,36 @@
 import { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 import { api } from "../lib/api";
 import { useApi } from "../lib/useApi";
 import { formatDate } from "../lib/format";
+import { desktopAlertsSupported } from "./useMessageAlerts";
+
+// Botón para recibir avisos del sistema operativo aunque el panel esté en otra pestaña.
+function DesktopAlertsButton() {
+  const [permission, setPermission] = useState(() => (desktopAlertsSupported() ? Notification.permission : "unsupported"));
+
+  if (permission === "unsupported") return null;
+  if (permission === "granted") return <span className="badge badge-published">Avisos de escritorio activados</span>;
+  if (permission === "denied") {
+    return <span className="muted">Avisos de escritorio bloqueados en este navegador</span>;
+  }
+  return (
+    <button type="button" className="btn btn-outline" onClick={async () => setPermission(await Notification.requestPermission())}>
+      🔔 Activar avisos de escritorio
+    </button>
+  );
+}
 
 function MessagesAdmin() {
   const { data, error, reload } = useApi("contact");
+  const { refreshMessages } = useOutletContext() ?? {};
   const [actionError, setActionError] = useState("");
 
   async function run(path, options) {
     try {
       await api(path, options);
       reload();
+      refreshMessages?.();
     } catch (err) {
       setActionError(err.message);
     }
@@ -25,6 +45,7 @@ function MessagesAdmin() {
           <h1>Mensajes</h1>
           <p>Mensajes enviados desde el formulario de contacto del sitio{data ? ` · ${unread} sin leer` : ""}.</p>
         </div>
+        <DesktopAlertsButton />
       </div>
 
       {(error || actionError) && <p className="alert alert-error">{error || actionError}</p>}

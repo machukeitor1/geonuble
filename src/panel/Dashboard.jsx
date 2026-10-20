@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { useAuth } from "../context/contexts";
 import { useApi } from "../lib/useApi";
 import { formatDate } from "../lib/format";
@@ -47,11 +47,13 @@ function Dashboard() {
   const isAdmin = user.role === "admin";
   const { data: properties } = useApi("properties?all=1");
   const { data: quotes } = useApi("quotes");
-  const { data: messages } = useApi(isAdmin ? "contact" : null);
+  // El contador lo mantiene el panel; al cambiar, se recarga la lista de últimos mensajes.
+  const { unreadMessages = 0 } = useOutletContext() ?? {};
+  const { data: messages } = useApi(isAdmin ? `contact?v=${unreadMessages}` : null);
   const { data: users } = useApi(isAdmin ? "users" : null);
 
   const count = (status) => properties?.filter((p) => p.status === status).length;
-  const unread = messages?.filter((m) => !m.read).length ?? 0;
+  const unread = unreadMessages;
   const myQuotes = quotes?.filter((q) => q.user_id === user.id);
   const brokers = users?.filter((u) => u.active).length;
   const firstName = user.name.split(" ")[0];
