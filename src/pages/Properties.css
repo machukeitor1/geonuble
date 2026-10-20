@@ -1,0 +1,37 @@
+.properties-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 2rem;
+}
+
+.properties-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a3a5c;
+}
+
+.properties-filters select {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #ccd5df;
+  border-radius: 8px;
+  font: inherit;
+  background: white;
+  min-width: 180px;
+}
+
+.properties-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+  gap: 2rem;
+  padding: 2rem 0 3rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 5rem 0;
+  color: #666;
+}

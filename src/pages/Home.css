@@ -1,0 +1,358 @@
+/* Portada */
+.hero {
+  position: relative;
+  min-height: min(78vh, 680px);
+  display: flex;
+  align-items: center;
+  color: white;
+  padding: 4rem 0;
+  /* Para usar una foto propia, cámbiala aquí (ej. url("/hero.jpg") en public/). */
+  background:
+    linear-gradient(100deg, rgba(14, 33, 54, 0.92) 0%, rgba(14, 33, 54, 0.7) 45%, rgba(14, 33, 54, 0.25) 100%),
+    url("https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1600") center / cover no-repeat;
+}
+
+.hero-content {
+  width: 100%;
+}
+
+.hero-eyebrow,
+.section-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f0c040;
+  margin: 0 0 0.8rem;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  line-height: 1.1;
+  max-width: 640px;
+  margin: 0 0 1rem;
+}
+
+.hero-lead {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  max-width: 560px;
+  opacity: 0.9;
+  margin: 0 0 2rem;
+}
+
+.hero-search {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.5rem;
+  background: white;
+  border-radius: 14px;
+  padding: 0.5rem;
+  max-width: 720px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+
+.hero-search label {
+  display: flex;
+  flex-direction: column;
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  min-width: 0;
+}
+
+.hero-search label + label {
+  border-left: 1px solid #e3e8ee;
+}
+
+.hero-search span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7a8a;
+}
+
+.hero-search select {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 1rem;
+  color: #1a3a5c;
+  font-weight: 600;
+  padding: 0.2rem 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+.hero-search button {
+  background: #f0c040;
+  color: #1a3a5c;
+  border: none;
+  border-radius: 10px;
+  padding: 0 2rem;
+  font: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.hero-search button:hover {
+  background: #e0b030;
+}
+
+.hero-secondary {
+  margin: 1.4rem 0 0;
+  opacity: 0.9;
+}
+
+.hero-secondary a {
+  color: #f0c040;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hero-secondary a:hover {
+  text-decoration: underline;
+}
+
+/* Secciones */
+.section {
+  padding: 4.5rem 0;
+}
+
+.section-soft {
+  background: #eef2f6;
+}
+
+.section-blue {
+  background: #1a3a5c;
+  color: white;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.section-head h2 {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  color: #1a3a5c;
+  margin: 0;
+}
+
+.section-blue .section-head h2 {
+  color: white;
+}
+
+.section-head-center {
+  justify-content: center;
+  text-align: center;
+}
+
+.link-arrow {
+  color: #1a3a5c;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.link-arrow:hover {
+  text-decoration: underline;
+}
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+  gap: 2rem;
+}
+
+.home-empty {
+  text-align: center;
+  background: white;
+  border: 1px dashed #c9d2dc;
+  border-radius: 16px;
+  padding: 3rem 1.5rem;
+}
+
+.home-empty h3 {
+  color: #1a3a5c;
+  margin: 0 0 0.5rem;
+}
+
+.home-empty p {
+  color: #5f6b78;
+  margin: 0 0 1.5rem;
+}
+
+/* Botones de la portada */
+.btn-primary,
+.btn-light {
+  display: inline-block;
+  padding: 0.85rem 1.8rem;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.btn-primary {
+  background: #f0c040;
+  color: #1a3a5c;
+}
+
+.btn-primary:hover {
+  background: #e0b030;
+}
+
+.btn-light {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.btn-light:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Servicios */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 1.5rem;
+}
+
+.service-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 2px 12px rgba(26, 58, 92, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.service-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #fdf3d4;
+  font-size: 1.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.service-card h3 {
+  color: #1a3a5c;
+  margin: 0 0 0.5rem;
+  font-size: 1.3rem;
+}
+
+.service-card p {
+  color: #5f6b78;
+  line-height: 1.6;
+  margin: 0 0 1.2rem;
+  flex: 1;
+}
+
+/* Por qué elegirnos */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 1.5rem;
+}
+
+.feature-item {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.feature-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.8rem;
+}
+
+.feature-item h3 {
+  margin: 0 0 0.5rem;
+  color: #f0c040;
+}
+
+.feature-item p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+/* Llamado final */
+.cta-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+  background: linear-gradient(120deg, #1a3a5c, #2a5a8c);
+  color: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+}
+
+.cta-band h2 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.4rem, 2.6vw, 1.8rem);
+}
+
+.cta-band p {
+  margin: 0;
+  opacity: 0.85;
+}
+
+.cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+@media (max-width: 700px) {
+  .hero {
+    padding: 3rem 0;
+    min-height: auto;
+    background:
+      linear-gradient(rgba(14, 33, 54, 0.85), rgba(14, 33, 54, 0.85)),
+      url("https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=900") center / cover no-repeat;
+  }
+
+  .hero-search {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-search label + label {
+    border-left: none;
+    border-top: 1px solid #e3e8ee;
+  }
+
+  .hero-search button {
+    padding: 0.85rem;
+  }
+
+  .section {
+    padding: 3rem 0;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-head-center {
+    align-items: center;
+  }
+
+  .cta-band {
+    padding: 2rem 1.5rem;
+  }
+}
