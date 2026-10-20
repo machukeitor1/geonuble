@@ -6,7 +6,7 @@ const prefersReducedMotion = () =>
 // Galería tipo presentación: avanza sola cada `interval` ms con fundido cruzado.
 // Se pausa con el mouse encima o el foco dentro; las flechas, miniaturas y el
 // deslizamiento en pantallas táctiles reinician el tiempo.
-function Slideshow({ images, title, interval = 10000 }) {
+function Slideshow({ images, title, interval = 5000 }) {
   const count = images.length;
   const [slide, setSlide] = useState({ index: 0, prev: null });
   const [paused, setPaused] = useState(false);
@@ -22,7 +22,7 @@ function Slideshow({ images, title, interval = 10000 }) {
     [count]
   );
 
-  // Avance automático. Depende del índice, así cada cambio (manual o no) reinicia los 10 s.
+  // Avance automático. Depende del índice, así cada cambio (manual o no) reinicia el tiempo.
   useEffect(() => {
     if (!autoplay) return;
     const timer = setTimeout(() => go(slide.index + 1), interval);
