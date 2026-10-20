@@ -30,3 +30,4 @@ public/uploads
 .env.local
 .vercel
 .env.vercel
+.env.resend.vercel
