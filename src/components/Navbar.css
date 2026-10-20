@@ -17,18 +17,41 @@
 }
 
 .navbar-logo {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  height: 70px;
+  padding-left: 132px; /* espacio para el sticker */
   color: white;
   font-size: 1.4rem;
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.logo-icon {
-  height: 40px;
+/* Logo como sticker pegado: grande, inclinado y colgando bajo la barra */
+.logo-sticker {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  z-index: 2;
+  height: 136px;
   width: auto;
+  transform: rotate(-6deg);
+  transform-origin: 50% 25%;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
+  transition: transform 0.25s ease;
+}
+
+.navbar-logo:hover .logo-sticker,
+.navbar-logo:focus-visible .logo-sticker {
+  transform: rotate(-2deg) scale(1.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-sticker {
+    transition: none;
+  }
 }
 
 .navbar-links {
@@ -111,18 +134,19 @@
   transform: rotate(-45deg) translate(5px, -6px);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 960px) {
   .navbar {
     padding: 0 1rem;
   }
 
   .navbar-logo {
     font-size: 1.1rem;
-    white-space: nowrap;
+    padding-left: 78px;
   }
 
-  .logo-icon {
-    height: 34px;
+  .logo-sticker {
+    top: 5px;
+    height: 84px;
   }
 
   .hamburger {

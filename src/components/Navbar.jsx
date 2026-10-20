@@ -9,8 +9,9 @@ function Navbar() {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo" onClick={() => setMenuOpen(false)}>
-          <img src="/logo.png" alt="" className="logo-icon" />
-          Geoñuble Propiedades
+          {/* Logo tipo sticker: sobresale por debajo de la barra */}
+          <img src="/logo-sticker.png" alt="" className="logo-sticker" width="251" height="300" />
+          <span>Geoñuble Propiedades</span>
         </Link>
         <button
           className={`hamburger ${menuOpen ? "active" : ""}`}
