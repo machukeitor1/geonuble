@@ -4,6 +4,7 @@ import MapView from "../components/MapView";
 import { api } from "../lib/api";
 import { uploadPropertyImage } from "../lib/images";
 import { CURRENCIES, OPERATIONS, STATUS_LABELS, TYPES } from "../lib/format";
+import { LEAVE_MESSAGE, unsavedGuard } from "./unsavedGuard";
 
 const EMPTY = {
   title: "",
@@ -66,6 +67,9 @@ function PropertyForm() {
   const [uploading, setUploading] = useState(0);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [searching, setSearching] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  // Último estado guardado; si el formulario difiere, hay cambios sin guardar.
+  const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify({ form: EMPTY, featuresText: "" }));
   // Fotos subidas en esta sesión que aún no se guardan (para limpiarlas si se cancela).
   const pendingUploads = useRef([]);
 
@@ -73,8 +77,10 @@ function PropertyForm() {
     if (!id) return;
     api(`properties?id=${id}`)
       .then((p) => {
-        setForm(toForm(p));
-        setFeaturesText(p.features.join("\n"));
+        const loaded = { form: toForm(p), featuresText: p.features.join("\n") };
+        setForm(loaded.form);
+        setFeaturesText(loaded.featuresText);
+        setSavedSnapshot(JSON.stringify(loaded));
       })
       .catch((err) => setMessage({ type: "error", text: err.message }))
       .finally(() => setLoading(false));
@@ -88,7 +94,7 @@ function PropertyForm() {
   async function handleFiles(e) {
     const files = [...e.target.files];
     e.target.value = "";
-    setMessage({ type: "", text: "" });
+    setUploadError("");
     setUploading((n) => n + files.length);
     for (const file of files) {
       try {
@@ -96,7 +102,7 @@ function PropertyForm() {
         pendingUploads.current.push(image);
         setForm((f) => ({ ...f, images: [...f.images, image] }));
       } catch (err) {
-        setMessage({ type: "error", text: `No se pudo subir ${file.name}: ${err.message}` });
+        setUploadError(`No se pudo subir "${file.name}": ${err.message}`);
       } finally {
         setUploading((n) => n - 1);
       }
@@ -147,8 +153,11 @@ function PropertyForm() {
     try {
       const saved = await api(id ? `properties?id=${id}` : "properties", { method: id ? "PUT" : "POST", body });
       pendingUploads.current = [];
+      const after = { form: toForm(saved), featuresText: saved.features.join("\n") };
+      setForm(after.form);
+      setFeaturesText(after.featuresText);
+      setSavedSnapshot(JSON.stringify(after));
       if (!id) navigate(`/panel/propiedades/${saved.id}`, { replace: true });
-      setForm(toForm(saved));
       setMessage({ type: "ok", text: "Propiedad guardada." });
     } catch (err) {
       setMessage({ type: "error", text: err.message });
@@ -156,6 +165,31 @@ function PropertyForm() {
       setSaving(false);
     }
   }
+
+  const dirty = JSON.stringify({ form, featuresText }) !== savedSnapshot;
+
+  // Aviso del navegador al cerrar o recargar la pestaña con cambios sin guardar.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  // El menú lateral consulta esta marca antes de navegar.
+  useEffect(() => {
+    unsavedGuard.dirty = dirty;
+    return () => {
+      unsavedGuard.dirty = false;
+    };
+  }, [dirty]);
+
+  const confirmLeave = (e) => {
+    if (dirty && !confirm(LEAVE_MESSAGE)) e.preventDefault();
+  };
 
   // Al salir sin guardar, borra las fotos que se subieron.
   useEffect(() => {
@@ -179,7 +213,7 @@ function PropertyForm() {
           {id && <p>Código #{id}</p>}
         </div>
         <div className="btn-row">
-          <Link to="/panel/propiedades" className="btn btn-outline">
+          <Link to="/panel/propiedades" className="btn btn-outline" onClick={confirmLeave}>
             Volver
           </Link>
           {id && form.status === "published" && (
@@ -326,6 +360,11 @@ function PropertyForm() {
           {uploading > 0 ? `Subiendo ${uploading} foto(s)…` : "＋ Agregar fotos (puedes elegir varias)"}
           <input type="file" accept="image/*" multiple onChange={handleFiles} className="sr-only" />
         </label>
+        {uploadError && (
+          <p className="alert alert-error" role="alert" style={{ marginTop: "0.8rem", marginBottom: 0 }}>
+            {uploadError}
+          </p>
+        )}
       </section>
 
       <section className="card">
@@ -377,6 +416,20 @@ function PropertyForm() {
           {saving ? "Guardando…" : "Guardar propiedad"}
         </button>
       </div>
+
+      {/* Barra fija mientras haya cambios sin guardar (p. ej. fotos recién subidas) */}
+      {(dirty || uploading > 0) && (
+        <div className="unsaved-bar" role="status">
+          <span>
+            {uploading > 0
+              ? `Subiendo ${uploading} foto(s)… espera para guardar.`
+              : "Tienes cambios sin guardar. Las fotos nuevas se publican al guardar."}
+          </span>
+          <button className="btn" disabled={saving || uploading > 0}>
+            {saving ? "Guardando…" : "Guardar ahora"}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

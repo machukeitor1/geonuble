@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/contexts";
 import { useMessageAlerts } from "./useMessageAlerts";
+import { LEAVE_MESSAGE, unsavedGuard } from "./unsavedGuard";
 
 function CountBadge({ count, label }) {
   if (!count) return null;
@@ -48,7 +49,18 @@ function PanelLayout() {
           </button>
         </div>
 
-        <nav className="panel-nav" id="panel-nav" onClick={close}>
+        <nav
+          className="panel-nav"
+          id="panel-nav"
+          // En fase de captura: se decide antes de que el enlace navegue.
+          onClickCapture={(e) => {
+            if (e.target.closest("a") && unsavedGuard.dirty && !confirm(LEAVE_MESSAGE)) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
+          onClick={close}
+        >
           <NavLink to="/panel" end>
             Inicio
           </NavLink>

@@ -3,7 +3,17 @@ import { api } from "./api";
 // Reduce y comprime una imagen en el navegador antes de subirla,
 // para mantener el almacenamiento dentro del plan gratuito.
 export async function resizeImage(file, maxSize, quality = 0.8) {
-  const bitmap = await createImageBitmap(file);
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    const heic = /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
+    throw new Error(
+      heic
+        ? "las fotos HEIC (iPhone) no se pueden leer en el navegador. Expórtala como JPG y vuelve a intentarlo."
+        : "el archivo no es una imagen compatible. Usa JPG, PNG o WEBP."
+    );
+  }
   const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * scale);
