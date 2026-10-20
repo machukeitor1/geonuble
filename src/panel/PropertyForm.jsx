@@ -27,6 +27,31 @@ const EMPTY = {
   featured: false,
 };
 
+// Extrae latitud y longitud de un enlace de Google Maps ("?q=lat,lng", "@lat,lng", "!3dlat!4dlng")
+// o de coordenadas escritas ("-36.62, -72.06"). Devuelve null si no encuentra un punto válido.
+function parseCoordinates(value) {
+  let textValue = String(value || "");
+  try {
+    textValue = decodeURIComponent(textValue);
+  } catch {
+    // Texto con "%" sueltos: se usa tal cual.
+  }
+  const patterns = [
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+    /(-?\d{1,2}\.\d+)\s*,[\s+]*(-?\d{1,3}\.\d+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = textValue.match(pattern);
+    if (match) {
+      const lat = Number(match[1]);
+      const lng = Number(match[2]);
+      if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng };
+    }
+  }
+  return null;
+}
+
 // Convierte null a "" para los inputs controlados.
 const toForm = (p) =>
   Object.fromEntries(Object.entries({ ...EMPTY, ...p }).map(([k, v]) => [k, v === null && !["lat", "lng"].includes(k) ? "" : v]));
@@ -325,7 +350,25 @@ function PropertyForm() {
             )}
           </div>
         </div>
-        <p className="muted">Haz clic en el mapa para marcar o corregir la ubicación exacta.</p>
+        <label className="field" style={{ marginBottom: "1rem" }}>
+          Enlace de Google Maps o coordenadas
+          <input
+            placeholder="Pega aquí el enlace de Google Maps o algo como -36.62097, -72.06055"
+            onChange={(e) => {
+              const point = parseCoordinates(e.target.value);
+              if (point) {
+                setForm((f) => ({ ...f, ...point }));
+                setMessage({ type: "ok", text: "Ubicación marcada desde el enlace." });
+              }
+            }}
+          />
+          <small>
+            {form.lat != null
+              ? `Punto actual: ${form.lat.toFixed(6)}, ${form.lng.toFixed(6)}`
+              : "En Google Maps: clic derecho sobre el punto y copia las coordenadas (los enlaces cortos maps.app.goo.gl no traen el punto)."}
+          </small>
+        </label>
+        <p className="muted">También puedes hacer clic en el mapa para marcar o corregir la ubicación.</p>
         <MapView lat={form.lat} lng={form.lng} onPick={(lat, lng) => setForm((f) => ({ ...f, lat, lng }))} />
       </section>
 
