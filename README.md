@@ -65,6 +65,18 @@ Para empezar de cero en local, borra las carpetas `.data/` y `public/uploads/`.
 
 > El plan gratuito *Hobby* de Vercel es para uso no comercial. Para un sitio de empresa corresponde el plan Pro, o publicar en otro hosting que soporte funciones Node.
 
+### 4. Aviso por correo de mensajes nuevos (opcional)
+
+Cada mensaje del formulario de contacto se guarda en el panel y, además, puede llegar por correo:
+
+1. Crea una cuenta gratis en [resend.com](https://resend.com) (3.000 correos/mes) con el correo donde quieres recibir los avisos.
+2. **API Keys → Create API Key** (permiso *Sending access*).
+3. En `.env.local` y en Vercel agrega `RESEND_API_KEY` y `NOTIFY_EMAIL` (el mismo correo de tu cuenta de Resend) y vuelve a desplegar.
+
+Sin dominio verificado, Resend envía desde `onboarding@resend.dev` y **solo al correo de tu cuenta**. Para enviar a otras direcciones o desde `avisos@tu-dominio.cl`, verifica el dominio en Resend y define `MAIL_FROM`.
+
+Si el envío falla, el mensaje igual queda guardado en **Panel → Mensajes**.
+
 ## Límites gratuitos (referencia)
 
 | Servicio | Gratis | Uso aproximado |
