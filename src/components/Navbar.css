@@ -17,11 +17,10 @@
 }
 
 .navbar-logo {
-  position: relative;
   display: flex;
   align-items: center;
+  gap: 0.75rem;
   height: 70px;
-  padding-left: 132px; /* espacio para el sticker */
   color: white;
   font-size: 1.4rem;
   font-weight: 700;
@@ -29,17 +28,14 @@
   white-space: nowrap;
 }
 
-/* Logo como sticker pegado: grande, inclinado y colgando bajo la barra */
+/* Logo como sticker pegado, inclinado, siempre dentro de la barra de 70 px
+   (58 px de alto: girado y con el efecto hover sigue cabiendo). */
 .logo-sticker {
-  position: absolute;
-  left: 0;
-  top: 6px;
-  z-index: 2;
-  height: 136px;
+  flex-shrink: 0;
+  height: 58px;
   width: auto;
   transform: rotate(-6deg);
-  transform-origin: 50% 25%;
-  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
   transition: transform 0.25s ease;
 }
 
@@ -141,12 +137,11 @@
 
   .navbar-logo {
     font-size: 1.1rem;
-    padding-left: 78px;
+    gap: 0.6rem;
   }
 
   .logo-sticker {
-    top: 5px;
-    height: 84px;
+    height: 52px;
   }
 
   .hamburger {

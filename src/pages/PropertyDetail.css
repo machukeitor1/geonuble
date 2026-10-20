@@ -1,12 +1,5 @@
-/* Arriba deja espacio para el logo-sticker que cuelga bajo la barra */
 .detail-page {
-  padding: 5.25rem 0 4rem;
-}
-
-@media (max-width: 768px) {
-  .detail-page {
-    padding-top: 2.25rem;
-  }
+  padding: 2rem 0 4rem;
 }
 
 .detail-grid {
