@@ -28,11 +28,15 @@
   white-space: nowrap;
 }
 
-/* Logo como sticker pegado, inclinado, siempre dentro de la barra de 70 px
-   (58 px de alto: girado y con el efecto hover sigue cabiendo). */
+/* Logo como sticker pegado e inclinado. Alineado arriba: lo poco que
+   sobresale de la barra de 70 px queda hacia abajo, sobre el contenido. */
 .logo-sticker {
+  position: relative;
+  z-index: 2;
   flex-shrink: 0;
-  height: 58px;
+  align-self: flex-start;
+  margin-top: 4px;
+  height: 70px;
   width: auto;
   transform: rotate(-6deg);
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
@@ -141,7 +145,7 @@
   }
 
   .logo-sticker {
-    height: 52px;
+    height: 62px;
   }
 
   .hamburger {
