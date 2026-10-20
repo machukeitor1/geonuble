@@ -31,3 +31,6 @@ public/uploads
 .vercel
 .env.vercel
 .env.resend.vercel
+
+# Fotos originales para preparar propiedades (se suben desde el panel, no a git)
+fotos/
