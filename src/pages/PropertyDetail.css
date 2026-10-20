@@ -27,6 +27,124 @@
   object-fit: cover;
 }
 
+/* Presentación de fotos */
+.slideshow-stage {
+  position: relative;
+  background: #1a3a5c;
+}
+
+.slideshow-stage .slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slideshow-stage .slide.is-prev {
+  z-index: 1;
+}
+
+/* La nueva foto aparece sobre la anterior: fundido cruzado */
+.slideshow-stage .slide.is-active {
+  z-index: 2;
+  animation: slide-fade 1s ease;
+}
+
+@keyframes slide-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.slide-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  color: #1a3a5c;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.slide-prev {
+  left: 12px;
+}
+
+.slide-next {
+  right: 12px;
+}
+
+.slideshow:hover .slide-arrow,
+.slide-arrow:focus-visible {
+  opacity: 1;
+}
+
+.slide-arrow:hover {
+  background: white;
+}
+
+.slide-counter {
+  position: absolute;
+  right: 12px;
+  bottom: 14px;
+  z-index: 3;
+  background: rgba(14, 33, 54, 0.7);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.slide-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 3;
+  height: 4px;
+  width: 100%;
+  background: #f0c040;
+  transform-origin: left;
+  animation: slide-progress linear forwards;
+}
+
+@keyframes slide-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* En pantallas táctiles no hay "hover": las flechas quedan siempre visibles */
+@media (hover: none) {
+  .slide-arrow {
+    opacity: 1;
+    width: 36px;
+    height: 36px;
+    font-size: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slideshow-stage .slide.is-active {
+    animation: none;
+  }
+}
+
 .detail-thumbnails {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));

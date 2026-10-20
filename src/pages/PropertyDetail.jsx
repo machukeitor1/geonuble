@@ -1,5 +1,6 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { useParams, Link } from "react-router-dom";
+import Slideshow from "../components/Slideshow";
 import { useApi } from "../lib/useApi";
 import { usePageTitle } from "../lib/usePageTitle";
 import { formatArea, formatPrice, googleMapsUrl, propertyLocation } from "../lib/format";
@@ -12,9 +13,6 @@ function PropertyDetail() {
   const { id } = useParams();
   const { data: property, error, loading } = useApi(`properties?id=${encodeURIComponent(id)}`);
   usePageTitle(property?.title || "Propiedad");
-  const [current, setCurrent] = useState({ id, index: 0 });
-  // Vuelve a la primera foto al cambiar de propiedad.
-  const currentImg = current.id === id ? current.index : 0;
 
   if (loading) return <p className="status-message">Cargando propiedad…</p>;
   if (error || !property) {
@@ -49,32 +47,8 @@ function PropertyDetail() {
 
         <div className="detail-grid">
           <div className="detail-gallery">
-            <div className="detail-main-img">
-              {images.length > 0 ? (
-                <img
-                  src={images[currentImg].url}
-                  alt={`${property.title} - foto ${currentImg + 1} de ${images.length}`}
-                />
-              ) : (
-                <div className="detail-noimg">Sin fotos</div>
-              )}
-            </div>
-            {images.length > 1 && (
-              <div className="detail-thumbnails">
-                {images.map((img, i) => (
-                  <button
-                    key={img.key || img.url}
-                    type="button"
-                    className={`thumb-btn ${i === currentImg ? "active" : ""}`}
-                    onClick={() => setCurrent({ id, index: i })}
-                    aria-label={`Ver foto ${i + 1}`}
-                    aria-pressed={i === currentImg}
-                  >
-                    <img src={img.thumb || img.url} alt="" loading="lazy" />
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* key: al cambiar de propiedad la presentación parte desde la primera foto */}
+            <Slideshow key={property.id} images={images} title={property.title} />
           </div>
 
           <div className="detail-info">
