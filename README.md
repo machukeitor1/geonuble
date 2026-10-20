@@ -73,7 +73,9 @@ Cada mensaje del formulario de contacto se guarda en el panel y, además, puede 
 2. **API Keys → Create API Key** (permiso *Sending access*).
 3. En `.env.local` y en Vercel agrega `RESEND_API_KEY` y `NOTIFY_EMAIL` (el mismo correo de tu cuenta de Resend) y vuelve a desplegar.
 
-Sin dominio verificado, Resend envía desde `onboarding@resend.dev` y **solo al correo de tu cuenta**. Para enviar a otras direcciones o desde `avisos@tu-dominio.cl`, verifica el dominio en Resend y define `MAIL_FROM`.
+Sin dominio verificado, Resend envía desde `onboarding@resend.dev` y **solo al correo de tu cuenta**. Para enviar a otras direcciones o desde `avisos@tu-dominio.cl`, verifica el dominio en Resend y define `MAIL_FROM`. Con el dominio verificado, `NOTIFY_EMAIL` acepta varios correos separados por coma (ej. `uno@gmail.com,otro@gmail.com`).
+
+Mientras no tengas dominio, puedes reenviar los avisos a otra persona con un filtro de Gmail (De: `onboarding@resend.dev` → Reenviar a).
 
 Si el envío falla, el mensaje igual queda guardado en **Panel → Mensajes**.
 
