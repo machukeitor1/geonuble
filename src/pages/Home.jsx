@@ -89,15 +89,18 @@ function Home() {
     <div className="home">
       <section className="hero">
         <div className="hero-content container">
-          <p className="hero-eyebrow">Corredores de propiedades en Chillán y Ñuble</p>
-          <h1>Encuentra la propiedad ideal en Ñuble</h1>
-          <p className="hero-lead">
-            Te ayudamos a comprar, vender o arrendar con asesoría cercana y conocimiento real de la zona.
-          </p>
-          <HeroSearch properties={properties} />
-          <p className="hero-secondary">
-            ¿Tienes una propiedad? <Link to="/contacto?asunto=Quiero vender">Véndela o arriéndala con nosotros →</Link>
-          </p>
+          {/* El texto va a la derecha para dejar a la vista la Catedral del banner */}
+          <div className="hero-panel">
+            <p className="hero-eyebrow">Corredores de propiedades en Chillán y Ñuble</p>
+            <h1>Encuentra la propiedad ideal en Ñuble</h1>
+            <p className="hero-lead">
+              Te ayudamos a comprar, vender o arrendar con asesoría cercana y conocimiento real de la zona.
+            </p>
+            <HeroSearch properties={properties} />
+            <p className="hero-secondary">
+              ¿Tienes una propiedad? <Link to="/contacto?asunto=Quiero vender">Véndela o arriéndala con nosotros →</Link>
+            </p>
+          </div>
         </div>
       </section>
 

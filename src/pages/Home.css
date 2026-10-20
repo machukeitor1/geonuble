@@ -6,14 +6,25 @@
   align-items: center;
   color: white;
   padding: 4rem 0;
-  /* Para usar una foto propia, cámbiala aquí (ej. url("/hero.jpg") en public/). */
+  /* Banner de Chillán (public/hero.jpg). El degradado oscurece solo el lado derecho,
+     donde va el texto, y deja a la vista la Catedral a la izquierda. */
   background:
-    linear-gradient(100deg, rgba(14, 33, 54, 0.92) 0%, rgba(14, 33, 54, 0.7) 45%, rgba(14, 33, 54, 0.25) 100%),
-    url("https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1600") center / cover no-repeat;
+    linear-gradient(270deg, rgba(14, 33, 54, 0.9) 0%, rgba(14, 33, 54, 0.75) 35%, rgba(14, 33, 54, 0) 62%),
+    #1a3a5c url("/hero.jpg") left center / cover no-repeat;
 }
 
 .hero-content {
   width: 100%;
+}
+
+.hero-panel {
+  margin-left: auto;
+  max-width: 600px;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
+}
+
+.hero-panel .hero-search {
+  text-shadow: none;
 }
 
 .hero-eyebrow,
@@ -318,12 +329,17 @@
 }
 
 @media (max-width: 700px) {
+  /* En celular la Catedral se ve arriba y se funde hacia el azul donde empieza el texto. */
   .hero {
-    padding: 3rem 0;
+    padding: 13rem 0 3rem;
     min-height: auto;
     background:
-      linear-gradient(rgba(14, 33, 54, 0.85), rgba(14, 33, 54, 0.85)),
-      url("https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=900") center / cover no-repeat;
+      linear-gradient(180deg, rgba(14, 33, 54, 0) 0, rgba(14, 33, 54, 0.15) 9rem, #0e2136 19rem),
+      #0e2136 url("/hero-mobile.jpg") center top / 100% auto no-repeat;
+  }
+
+  .hero-panel {
+    max-width: none;
   }
 
   .hero-search {
