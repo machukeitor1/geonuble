@@ -136,23 +136,26 @@ Sin ninguna variable configurada la búsqueda **funciona igual** con el parser p
 
 | Métrica | Parser por reglas | Llama 3.1 8B | Llama 3.3 70B |
 |---|---:|---:|---:|
-| Filtros correctos (todos los campos) | **97,7%** | 55,8% | 87,1% |
-| Consultas con todos los filtros correctos | **93,3%** | 13,3% | 70,0% |
-| Características correctas | 81,8% | 41,7% | **83,3%** |
-| Recall@5 | **96,6%** | 73,3% | 92,2% |
-| Respuestas inválidas (cae a reglas) | — | 7 de 30 | 1 de 30 |
-| Latencia de interpretación (prom. / p95) | **1 ms / 2 ms** | 704 ms / 1.106 ms | 2.082 ms / 4.999 ms |
-| Latencia total de la búsqueda (prom.) | **88 ms** | 755 ms | 2.185 ms |
-| Tokens por búsqueda (entrada / salida) | — | 669 / 64 | 669 / 41 |
-| Búsquedas diarias con la cuota gratis | ilimitadas | ~2.000 (≈5 neurons) | ~380 (≈26 neurons) |
+| Filtros correctos (todos los campos) | **97,7%** | 79,2% | 95,5% |
+| Consultas con todos los filtros correctos | **93,3%** | 50,0% | 90,0% |
+| Características correctas | 81,8% | 57,1% | **84,6%** |
+| Recall@5 | **96,6%** | 94,0% | **96,6%** |
+| Respuestas inválidas (cae a reglas) | — | 0 de 30 | 0 de 30 |
+| Latencia de interpretación (prom. / p95) | **1 ms / 10 ms** | 517 ms / 913 ms | 2.108 ms / 4.021 ms |
+| Latencia total de la búsqueda (prom.) | **85 ms** | 596 ms | 2.175 ms |
+| Tokens por búsqueda (entrada / salida) | — | 907 / 33 | 907 / 38 |
+| Búsquedas diarias con la cuota gratis | ilimitadas | ~2.000 (≈5 neurons) | ~310 (≈32 neurons) |
 
 Medido el 25-11-2026 en Workers AI (`@cf/meta/llama-3.1-8b-instruct` y `@cf/meta/llama-3.3-70b-instruct-fp8-fast`), con embeddings bge-m3 en todas las columnas. Costo en dinero: $0 en todos los casos (plan gratis).
 
-**Qué muestra el 70B:** mejora mucho al 8B y es el único que entiende características que las reglas no conocen ("condominio", "frutales"), pero sigue por debajo de las reglas: agrega `operacion: "venta"` sin que la consulta lo diga (5 veces), no reconoce "bodega" como tipo ni "Yungay" como comuna en dos consultas, tarda ~2 s (hasta 5 s) y la cuota alcanza para ~380 búsquedas al día. Usarlo como complemento de las reglas (solo para lo que ellas no entienden) ganaría 2 de 30 consultas en este set, lo que hoy no justifica la espera ni el límite diario.
+**El prompt importó tanto como el modelo.** Con la primera versión, los dos modelos copiaban en `texto_semantico` el ejemplo del propio prompt, agregaban `operacion: "venta"` sin que la consulta lo dijera e inventaban comunas. La segunda versión exige que `operacion` y `comuna` aparezcan escritas en la consulta, prohíbe agregar palabras que la consulta no dice y trae dos ejemplos que no se parecen al set de evaluación. Resultado:
 
-**Defecto conocido del prompt:** ambos modelos copiaron en `texto_semantico` el ejemplo del prompt ("luminosa, tranquila, cerca del centro") en una consulta que no lo decía. Hay que reescribir ese ejemplo y la regla de `operacion` antes de volver a medir.
+| | Filtros correctos | Consultas exactas | Recall@5 | Respuestas inválidas |
+|---|---:|---:|---:|---:|
+| 8B, primer prompt → prompt actual | 55,8% → 79,2% | 13,3% → 50,0% | 73,3% → 94,0% | 7 → 0 |
+| 70B, primer prompt → prompt actual | 87,1% → 95,5% | 70,0% → 90,0% | 92,2% → 96,6% | 1 → 0 |
 
-**Qué muestra el 8B:** con este set, el modelo chico **empeora** la búsqueda frente a las reglas. Sus errores típicos son agregar `operacion: "venta"` cuando la consulta no la menciona (6 de 24 aciertos en ese campo), inventar una comuna ("parcela con vista a la cordillera" → Ñiquén), dejar el precio dentro de `texto_semantico` en vez de `precio_max`, convertir frases en características ("para camiones", "vista a la cordillera") y devolver JSON que no cumple el esquema (7 de 30, que caen a reglas). Por eso la configuración recomendada hoy es **reglas para los filtros + embeddings para el orden** (`EMBEDDINGS_PROVIDER=workers-ai`, sin `LLM_PROVIDER`). El eval sirve justamente para probar otro modelo o un mejor prompt antes de activarlo.
+**Qué muestra:** el 70B queda prácticamente a la par de las reglas (mismo recall@5, 2 puntos menos en filtros) y es el único que entiende características que las reglas no conocen ("condominio", "frutales"). Sus errores restantes: en una consulta dejó el precio dentro de `texto_semantico` y en otra tradujo "para camiones" como "estacionamiento". El 8B sigue convirtiendo frases en características ("vista a la cordillera", "grande") y confunde tipos ("3d2b" → Departamento). Las reglas siguen siendo ~25 veces más rápidas y no tienen límite diario, por eso la configuración en producción es **reglas para los filtros + embeddings para el orden** (`EMBEDDINGS_PROVIDER=workers-ai`, sin `LLM_PROVIDER`). El 70B es la opción si las consultas reales de visitantes resultan más variadas que este set.
 
 **Ojo con el sesgo:** las consultas las escribió el mismo autor del parser, así que el resultado de las reglas es optimista; lo que más importa es comparar con consultas reales de visitantes. Los errores del parser están en características que no conoce ("condominio", "frutales") y en consultas vagas ("algo tranquilo en el campo").
 
