@@ -14,3 +14,5 @@ const { total, actualizados } = await embedPending({
   onProgress: (done, of) => console.log(`  ${done}/${of}`),
 });
 console.log(`Listo: ${actualizados} de ${total} propiedades actualizadas (el resto no cambió).`);
+// PGlite deja el proceso abierto: se cierra explícitamente.
+process.exit(0);

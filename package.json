@@ -10,7 +10,9 @@
     "test": "node --test --test-concurrency=1 tests/*.test.js",
     "preview": "vite preview",
     "db:setup": "node --use-system-ca --env-file-if-exists=.env.local scripts/db-setup.js",
-    "embed:backfill": "node --use-system-ca --env-file-if-exists=.env.local scripts/embed-backfill.js"
+    "embed:backfill": "node --use-system-ca --env-file-if-exists=.env.local scripts/embed-backfill.js",
+    "seed:demo": "node --use-system-ca --env-file-if-exists=.env.local scripts/seed-demo.js",
+    "eval:search": "node --use-system-ca --env-file-if-exists=.env.local scripts/eval-search.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
