@@ -64,6 +64,7 @@ export const PUT = handle(async (request) => {
   const email = text(body.email, 200).toLowerCase();
   const name = text(body.name, 200);
   if (!email || !name) throw new HttpError(400, "Nombre y email son obligatorios");
+  if (body.password) checkPassword(body.password);
 
   const [taken] = await query("SELECT id FROM users WHERE email = $1 AND id <> $2", [email, id]);
   if (taken) throw new HttpError(409, "Ya existe un usuario con ese email");
@@ -80,7 +81,6 @@ export const PUT = handle(async (request) => {
   if (!user) throw new HttpError(404, "Usuario no encontrado");
 
   if (body.password) {
-    checkPassword(body.password);
     await query("UPDATE users SET password_hash = $1 WHERE id = $2", [await hashPassword(body.password), id]);
   }
   return json(user);

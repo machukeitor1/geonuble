@@ -34,6 +34,7 @@ export const POST = handle(async (request) => {
   const user = await requireUser(request);
   const body = await readJson(request);
   const propertyId = Number(body.property_id);
+  if (!Number.isInteger(propertyId) || propertyId <= 0) throw new HttpError(400, "Falta la propiedad");
 
   const [property] = await query("SELECT id FROM properties WHERE id = $1", [propertyId]);
   if (!property) throw new HttpError(404, "Propiedad no encontrada");

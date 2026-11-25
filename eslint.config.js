@@ -23,7 +23,7 @@ export default defineConfig([
   },
   {
     // Código que corre en Node (funciones de Vercel, scripts y config)
-    files: ['api/**/*.js', 'lib/**/*.js', 'scripts/**/*.js', 'vite.config.js'],
+    files: ['api/**/*.js', 'lib/**/*.js', 'scripts/**/*.js', 'tests/**/*.js', 'vite.config.js'],
     languageOptions: { globals: globals.node },
   },
 ])

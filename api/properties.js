@@ -1,4 +1,4 @@
-import { handle, json, readJson, text, numberOrNull, getId, HttpError } from "../lib/http.js";
+import { handle, json, readJson, text, numberOrNull, intOrNull, getId, HttpError } from "../lib/http.js";
 import { query } from "../lib/db.js";
 import { getUser, requireAdmin } from "../lib/auth.js";
 import { deleteImage } from "../lib/storage.js";
@@ -52,9 +52,9 @@ function readProperty(body) {
     lng,
     numberOrNull(body.total_area),
     numberOrNull(body.built_area),
-    numberOrNull(body.bedrooms),
-    numberOrNull(body.bathrooms),
-    numberOrNull(body.parking),
+    intOrNull(body.bedrooms, "Dormitorios"),
+    intOrNull(body.bathrooms, "Baños"),
+    intOrNull(body.parking, "Estacionamientos"),
     JSON.stringify(features),
     JSON.stringify(cleanImages(body.images)),
     STATUSES.includes(body.status) ? body.status : "draft",

@@ -2,6 +2,9 @@
 
 Sitio web y panel de gestión de Geoñuble Propiedades, corredora en la región de Ñuble (Chillán, Chile).
 
+> [!IMPORTANT]
+> **Proyecto en fase inicial.** Se está desarrollando la plataforma de una corredora de propiedades para la región de Ñuble: un sitio público para mostrar el catálogo y recibir consultas, con un **gestor incluido** (panel de administración y de corredores) para cargar propiedades, administrar usuarios, revisar mensajes y generar cotizaciones. Las funciones, la estructura de datos y el diseño pueden cambiar mientras avanza el desarrollo.
+
 | Módulo | Ruta | Quién |
 |---|---|---|
 | Sitio público | `/`, `/propiedades`, `/contacto` | Visitantes |
@@ -32,6 +35,14 @@ npm run dev
 Abre http://localhost:5173/panel e ingresa con `ADMIN_EMAIL` / `ADMIN_PASSWORD` (el administrador se crea solo la primera vez).
 
 Para empezar de cero en local, borra las carpetas `.data/` y `public/uploads/`.
+
+### Tests
+
+```bash
+npm test
+```
+
+Prueban la API (sesión, permisos por rol, propiedades, cotizaciones, contacto, datos de la empresa y fotos) contra una base temporal, sin tocar `.data/` ni `public/uploads/`.
 
 ## Puesta en producción
 
