@@ -138,22 +138,22 @@ Sin ninguna variable configurada la búsqueda **funciona igual** con el parser p
 
 | Métrica | Reglas | Híbrido 8B | Híbrido 70B | LLM principal 8B | LLM principal 70B |
 |---|---:|---:|---:|---:|---:|
-| Filtros correctos (todos los campos) | 97,7% | **100%** | **100%** | 79,2% | 95,5% |
-| Consultas con todos los filtros correctos | 93,3% | **100%** | **100%** | 50,0% | 90,0% |
-| Características correctas | 81,8% | **100%** | **100%** | 57,1% | 84,6% |
+| Filtros correctos (todos los campos) | **100%** | 98,9% | **100%** | 79,2% | 95,5% |
+| Consultas con todos los filtros correctos | **100%** | 96,7% | **100%** | 50,0% | 90,0% |
+| Características correctas | **100%** | 91,7% | **100%** | 57,1% | 84,6% |
 | Recall@5 | **96,6%** | **96,6%** | **96,6%** | 94,0% | **96,6%** |
-| Consultas que llaman al LLM | 0 de 30 | 5 de 30 | 5 de 30 | 30 de 30 | 30 de 30 |
-| Latencia de interpretación (prom. / p95) | **1 ms / 2 ms** | 83 ms / 566 ms | 361 ms / 1.605 ms | 517 ms / 913 ms | 2.108 ms / 4.021 ms |
-| Latencia total de la búsqueda (prom.) | **~95 ms** | 188 ms | 443 ms | 596 ms | 2.175 ms |
-| Búsquedas diarias con la cuota gratis | ilimitadas | ~12.500 | ~1.900 | ~2.000 | ~310 |
+| Consultas que llaman al LLM | 0 de 30 | 3 de 30 | 3 de 30 | 30 de 30 | 30 de 30 |
+| Latencia de interpretación (prom. / p95) | **1 ms / 2 ms** | 76 ms / 895 ms | 143 ms / 1.567 ms | 517 ms / 913 ms | 2.108 ms / 4.021 ms |
+| Latencia total de la búsqueda (prom.) | **~85 ms** | 181 ms | 244 ms | 596 ms | 2.175 ms |
+| Búsquedas diarias con la cuota gratis | ilimitadas | ~18.500 | ~3.200 | ~2.000 | ~310 |
 
 Medido el 25-11-2026 en Workers AI (`@cf/meta/llama-3.1-8b-instruct` y `@cf/meta/llama-3.3-70b-instruct-fp8-fast`), con embeddings bge-m3 en todas las columnas. Costo en dinero: $0 en todos los casos (plan gratis). Los modos se comparan con `npm run eval:search -- --modos=reglas,llm,hibrido`.
 
-**Qué muestra:** el modo híbrido se queda con lo mejor de cada parte. Las reglas resuelven 25 de las 30 consultas sin llamar a nadie, y el LLM solo entra en las 5 con palabras que las reglas no conocen ("condominio", "frutales", "cabaña", "camiones" y un intento de inyección), donde aporta las características que faltaban sin tocar lo demás. El único error que queda ("busco algo tranquilo en el campo, con pozo") viene de las reglas, que leen "campo" como tipo; el híbrido no lo corrige porque nunca reemplaza lo que entendieron las reglas.
+**Qué muestra:** el modo híbrido se queda con lo mejor de cada parte. Las reglas resuelven 27 de las 30 consultas sin llamar a nadie, y el LLM solo entra en las 3 con palabras que las reglas no conocen ("cabaña", "camiones" y un intento de inyección), donde puede agregar lo que falta sin tocar lo demás. En esas 3 llamadas, el 70B no agregó nada incorrecto y el 8B sí agregó una característica que la consulta no pedía. El único error de recall ("busco algo tranquilo en el campo, con pozo") viene de las reglas, que leen "campo" como tipo; el híbrido no lo corrige porque nunca reemplaza lo que entendieron las reglas.
 
-**Configuración recomendada:** reglas + embeddings + LLM como complemento (`LLM_PROVIDER=workers-ai`, `LLM_MODE` sin definir o `complemento`). Entre los dos modelos rinden igual en este set; el 70B es más robusto con palabras desconocidas (justo los casos donde se usa) y su cuota alcanza para ~1.900 búsquedas diarias, de sobra para el sitio. El 8B es la alternativa si el tráfico crece.
+**Configuración en producción:** reglas + embeddings + LLM como complemento con el 70B (`LLM_PROVIDER=workers-ai`, `LLM_MODEL=@cf/meta/llama-3.3-70b-instruct-fp8-fast`, `LLM_MODE` sin definir). Es el más confiable justo en los casos donde se usa, y la cuota alcanza para ~3.200 búsquedas diarias. Ejemplos reales en producción: "parcela con frutales y sauna" y "cabaña para vacaciones" se resolvieron como **Reglas + IA**.
 
-**Cuidado con el 100%:** este set lo escribió el mismo autor de las reglas y de la lista de palabras descriptivas, así que el resultado es optimista. Lo que confirma o desmiente el diseño son consultas reales de visitantes.
+**Cuidado con el 100%:** este set lo escribió el mismo autor de las reglas, de la lista de palabras descriptivas y del vocabulario de características, y parte de ese vocabulario ("condominio", "frutal") se agregó después de ver los errores del eval. El resultado de las reglas es, por lo tanto, optimista. Lo que confirma o desmiente el diseño son consultas reales de visitantes.
 
 **El prompt importó tanto como el modelo.** Con la primera versión, los dos modelos copiaban en `texto_semantico` el ejemplo del propio prompt, agregaban `operacion: "venta"` sin que la consulta lo dijera e inventaban comunas. La segunda versión exige que `operacion` y `comuna` aparezcan escritas en la consulta, prohíbe agregar palabras que la consulta no dice y trae dos ejemplos que no se parecen al set de evaluación. Resultado:
 
@@ -168,7 +168,7 @@ Medido el 25-11-2026 en Workers AI (`@cf/meta/llama-3.1-8b-instruct` y `@cf/meta
 
 ### Costo y cuota
 
-- **Workers AI:** 10.000 neurons gratis al día (se reinician a las 00:00 UTC). Con los precios publicados de `llama-3.1-8b-instruct-fp8-fast` como referencia (4.119 neurons por millón de tokens de entrada y 34.868 de salida), una extracción de ~700 tokens de entrada y ~40 de salida usa ≈4 neurons, y el embedding de la consulta (bge-m3, 1.075 neurons por millón) es despreciable: **del orden de 2.000 búsquedas diarias gratis** si el LLM interpreta todo. En modo complemento solo ~1 de cada 6 búsquedas llama al LLM: ~12.500 diarias con el 8B o ~1.900 con el 70B. El eval imprime el valor medido.
+- **Workers AI:** 10.000 neurons gratis al día (se reinician a las 00:00 UTC). Con los precios publicados de `llama-3.1-8b-instruct-fp8-fast` como referencia (4.119 neurons por millón de tokens de entrada y 34.868 de salida), una extracción de ~700 tokens de entrada y ~40 de salida usa ≈4 neurons, y el embedding de la consulta (bge-m3, 1.075 neurons por millón) es despreciable: **del orden de 2.000 búsquedas diarias gratis** si el LLM interpreta todo. En modo complemento solo ~1 de cada 10 búsquedas del set llama al LLM: ~18.500 diarias con el 8B o ~3.200 con el 70B. El eval imprime el valor medido.
 - **Gemini Flash-Lite:** gratis dentro de los límites del plan (por proyecto; se reinician a medianoche hora del Pacífico).
 - **Ollama:** local, sin costo; útil para correr los evals.
 - Si se agota la cuota (o ante cualquier error del proveedor), la búsqueda sigue con el parser por reglas y lo avisa en la respuesta.
