@@ -8,8 +8,8 @@ test("unknownWords: lo descriptivo no llama al LLM; lo que podría ser filtro s�
   for (const q of ["casa luminosa y tranquila cerca del colegio", "departamento moderno amplio cerca del mall", "parcela con vista a la cordillera", "casa barata para la familia"]) {
     assert.deepEqual(unknownWords(parseRules(q).texto_semantico), [], q);
   }
-  assert.deepEqual(unknownWords(parseRules("casa en condominio").texto_semantico), ["condominio"]);
-  assert.deepEqual(unknownWords(parseRules("casa con piscina temperada y sauna").texto_semantico), ["temperada", "sauna"]);
+  assert.deepEqual(unknownWords(parseRules("casa con cava").texto_semantico), ["cava"]);
+  assert.deepEqual(unknownWords(parseRules("casa con piscina temperada y cava").texto_semantico), ["temperada", "cava"]);
   assert.deepEqual(unknownWords(""), []);
 });
 
@@ -38,9 +38,9 @@ test("mergeFilters: rechaza comunas, precios y características que no están en
 });
 
 test("mergeFilters: suma características nuevas y las saca del texto descriptivo", () => {
-  const q = "casa moderna en condominio con patio";
+  const q = "casa moderna en cava con patio";
   const rules = parseRules(q);
-  const { filtros } = mergeFilters(rules, { caracteristicas: ["patio", "condominio"] }, q);
-  assert.deepEqual(filtros.caracteristicas, ["patio", "condominio"]);
+  const { filtros } = mergeFilters(rules, { caracteristicas: ["patio", "cava"] }, q);
+  assert.deepEqual(filtros.caracteristicas, ["patio", "cava"]);
   assert.equal(filtros.texto_semantico, "moderna");
 });

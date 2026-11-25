@@ -82,3 +82,20 @@ test("reglas: 'cerca' solo (el lugar era la comuna) no queda como descripción",
   assert.equal(parseRules("casa junto a Bulnes").texto_semantico, "");
   assert.equal(parseRules("depto cerca de la universidad").texto_semantico, "cerca universidad", "con lugar, sí describe");
 });
+
+test("reglas: características comunes de avisos de Ñuble", () => {
+  const cases = [
+    ["casa en condominio con quincho", ["condominio", "quincho"]],
+    ["parcela con árboles frutales y huerto", ["frutal", "huerto"]],
+    ["casa con sauna y jacuzzi", ["jacuzzi", "sauna"]],
+    ["parcela con tinaja y paneles solares", ["solar", "tinaja"]],
+    ["depto con aire acondicionado, logia y dormitorio en suite", ["aire acondicionado", "logia", "suite"]],
+    ["campo con galpón e invernadero", ["galpon", "invernadero"]],
+    ["sitio con agua potable y alcantarillado", ["agua potable", "alcantarillado"]],
+    ["casa con alarma y portón eléctrico", ["alarma", "porton"]],
+  ];
+  for (const [q, expected] of cases) {
+    assert.deepEqual([...(parseRules(q).caracteristicas || [])].sort(), expected, q);
+  }
+  assert.equal(parseRules("casa en condominio con quincho").texto_semantico, "");
+});
