@@ -134,15 +134,22 @@ Sin ninguna variable configurada la búsqueda **funciona igual** con el parser p
 
 `tests/search-evals.json` tiene **30 consultas realistas de Ñuble** con los filtros esperados y las propiedades que deberían salir entre las 5 primeras, sobre 21 propiedades ficticias (`tests/fixtures/properties.json`). `npm run eval:search` las corre en una base temporal con la UF fija y compara el parser por reglas con el LLM configurado:
 
-| Métrica | Parser por reglas | LLM (Workers AI · llama-3.1-8b) |
+| Métrica | Parser por reglas | LLM (Workers AI · llama-3.1-8b-instruct) |
 |---|---:|---:|
-| Filtros correctos (todos los campos) | 97,7% | *pendiente* |
-| Consultas con todos los filtros correctos | 93,3% | *pendiente* |
-| Recall@5 | 96,6% | *pendiente* |
-| Latencia de interpretación (prom. / p95) | 1 ms / 2 ms | *pendiente* |
-| Costo por búsqueda | $0 | $0 (plan gratis) |
+| Filtros correctos (todos los campos) | 97,7% | 55,8% |
+| Consultas con todos los filtros correctos | 93,3% | 13,3% |
+| Recall@5 | 96,6% | 73,3% |
+| Respuestas inválidas (cae a reglas) | — | 7 de 30 |
+| Latencia de interpretación (prom. / p95) | 1 ms / 2 ms | 704 ms / 1.106 ms |
+| Latencia total de la búsqueda (prom.) | 88 ms | 755 ms |
+| Tokens por búsqueda (entrada / salida) | — | 669 / 64 |
+| Costo por búsqueda | $0 | $0 (plan gratis, ≈5 neurons → ~2.000 búsquedas/día) |
 
-Medido sin embeddings (orden por palabras). La columna del LLM se completa corriendo el eval con `LLM_PROVIDER` configurado. **Ojo con el sesgo:** las consultas las escribió el mismo autor del parser, así que su resultado es optimista; lo que importa es la comparación con el LLM y con consultas reales de visitantes. Los errores del parser están en características que no conoce ("condominio", "frutales") y en consultas vagas ("algo tranquilo en el campo").
+Medido el 25-11-2026 con embeddings bge-m3 de Workers AI en ambas columnas.
+
+**Qué muestra:** con este set, el modelo chico **empeora** la búsqueda frente a las reglas. Sus errores típicos son agregar `operacion: "venta"` cuando la consulta no la menciona (6 de 24 aciertos en ese campo), inventar una comuna ("parcela con vista a la cordillera" → Ñiquén), dejar el precio dentro de `texto_semantico` en vez de `precio_max`, convertir frases en características ("para camiones", "vista a la cordillera") y devolver JSON que no cumple el esquema (7 de 30, que caen a reglas). Por eso la configuración recomendada hoy es **reglas para los filtros + embeddings para el orden** (`EMBEDDINGS_PROVIDER=workers-ai`, sin `LLM_PROVIDER`). El eval sirve justamente para probar otro modelo o un mejor prompt antes de activarlo.
+
+**Ojo con el sesgo:** las consultas las escribió el mismo autor del parser, así que el resultado de las reglas es optimista; lo que más importa es comparar con consultas reales de visitantes. Los errores del parser están en características que no conoce ("condominio", "frutales") y en consultas vagas ("algo tranquilo en el campo").
 
 ### Costo y cuota
 
@@ -153,7 +160,7 @@ Medido sin embeddings (orden por palabras). La columna del LLM se completa corri
 
 ### Configuración
 
-1. **Cloudflare Workers AI:** en el panel de Cloudflare copia tu *Account ID* y crea un token en **My Profile → API Tokens** con el permiso **Workers AI** (solo ese). Define `CF_ACCOUNT_ID`, `CF_AI_TOKEN`, `LLM_PROVIDER=workers-ai` y `EMBEDDINGS_PROVIDER=workers-ai`.
+1. **Cloudflare Workers AI:** en el panel de Cloudflare copia tu *Account ID* y crea un token en **My Profile → API Tokens** con el permiso **Workers AI** (solo ese). Define `CF_ACCOUNT_ID`, `CF_AI_TOKEN` y `EMBEDDINGS_PROVIDER=workers-ai`. Agrega `LLM_PROVIDER` solo si el eval muestra que el modelo mejora a las reglas (ver resultados arriba).
 2. **Base de datos:** `npm run db:setup` activa `pgvector` en Neon y agrega las columnas `embedding` y `embedding_hash` (se puede correr de nuevo sin riesgo). Luego `npm run embed:backfill` genera los embeddings de las propiedades existentes.
 3. **En local:** `npm run seed:demo` carga las propiedades ficticias en `.data/` para probar `/buscar`. Si vienes de una versión anterior, borra `.data/` (PGlite 0.6 no abre bases creadas con 0.5).
 4. **Evals sin gastar cuota:** con [Ollama](https://ollama.com) instalado, `ollama pull llama3.1:8b` y `ollama pull bge-m3`, define `LLM_PROVIDER=ollama` y `EMBEDDINGS_PROVIDER=ollama`, y corre `npm run eval:search -- --detalle`.
