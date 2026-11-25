@@ -6,6 +6,8 @@ import assert from "node:assert/strict";
 
 process.env.EMBEDDINGS_DIM = "8";
 process.env.UF_CLP = "40000";
+// Estos tests cubren el modo principal; el modo complemento tiene su propio bloque al final.
+process.env.LLM_MODE = "principal";
 delete process.env.LLM_PROVIDER;
 delete process.env.EMBEDDINGS_PROVIDER;
 delete process.env.CMF_API_KEY;
@@ -157,4 +159,67 @@ test("validación: vacío, más de 300 caracteres y rate limit", async () => {
   for (let i = 0; i < 20; i++) assert.notEqual((await post({ q: `casa ${i}` }, ip)).status, 429);
   assert.equal((await post({ q: "casa" }, ip)).status, 429);
   assert.notEqual((await post({ q: "casa" }, { "x-forwarded-for": "203.0.113.8" })).status, 429);
+});
+
+test("complemento: si las reglas entienden todo, no llama al LLM", async () => {
+  process.env.LLM_MODE = "complemento";
+  try {
+    llm(() => assert.fail("no debía llamar al LLM"));
+    const { data } = await post({ q: "casa luminosa cerca del centro en Chillán" });
+    assert.equal(data.metodo, "reglas");
+    assert.equal(extractCalls.length, 0);
+    assert.deepEqual(data.avisos, []);
+  } finally {
+    process.env.LLM_MODE = "principal";
+  }
+});
+
+test("complemento: agrega solo lo que el LLM entiende y se puede comprobar en la consulta", async () => {
+  process.env.LLM_MODE = "complemento";
+  try {
+    llm(() => ({
+      raw: {
+        operacion: "venta",
+        tipo: "Departamento",
+        comuna: "Bulnes",
+        dormitorios_min: 9,
+        caracteristicas: ["piscina", "quincho", "condominio", "estacionamiento", "familia grande y feliz"],
+        texto_semantico: "inventado",
+      },
+      usage: {},
+    }));
+    const { data } = await post({ q: "casa con piscina y quincho en condominio para la familia" });
+    assert.deepEqual(extractCalls, ["casa con piscina y quincho en condominio para la familia"]);
+    assert.equal(data.metodo, "reglas+ia");
+    const f = data.filtros_aplicados;
+    assert.equal(f.tipo, "Casa", "lo de las reglas no se reemplaza");
+    assert.equal(f.operacion, undefined, "la operación nunca viene del LLM");
+    assert.equal(f.comuna, undefined, "comuna que no está escrita: rechazada");
+    assert.equal(f.dormitorios_min, undefined, "sin números en la consulta: rechazado");
+    assert.deepEqual(f.caracteristicas, ["piscina", "quincho", "condominio"], "solo características escritas, cortas y no descriptivas");
+    assert.equal(f.texto_semantico, "familia");
+  } finally {
+    process.env.LLM_MODE = "principal";
+  }
+});
+
+test("complemento: palabras desconocidas activan el LLM; si falla quedan las reglas sin aviso", async () => {
+  process.env.LLM_MODE = "complemento";
+  try {
+    llm(() => { throw new ProviderError("cuota", "429"); });
+    const { data } = await post({ q: "parcela en Pinto con frutales" });
+    assert.equal(extractCalls.length, 1);
+    assert.equal(data.metodo, "reglas");
+    assert.deepEqual(data.avisos, []);
+    assert.deepEqual(titles(data), ["Parcela de agrado"]);
+
+    _clearSearchCaches();
+    llm(() => ({ raw: { caracteristicas: ["frutales"], texto_semantico: "" }, usage: {} }));
+    const ok = await post({ q: "parcela en Pinto con frutales" });
+    assert.equal(ok.data.metodo, "reglas+ia");
+    assert.deepEqual(ok.data.filtros_aplicados.caracteristicas, ["frutales"]);
+    assert.equal(ok.data.filtros_aplicados.comuna, "Pinto");
+  } finally {
+    process.env.LLM_MODE = "principal";
+  }
 });

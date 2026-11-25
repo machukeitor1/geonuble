@@ -28,6 +28,7 @@ const METODOS = {
   llm: "Entendido con IA",
   reglas: "Interpretado con reglas",
   filtros: "Filtros editados",
+  "reglas+ia": "Reglas + IA",
 };
 
 function Chip({ name, value, filters, onChange, onRemove }) {
