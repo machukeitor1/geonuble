@@ -34,3 +34,6 @@ public/uploads
 
 # Fotos originales para preparar propiedades (se suben desde el panel, no a git)
 fotos/
+
+# Configuración local de Claude Code
+.claude/
