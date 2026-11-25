@@ -31,4 +31,11 @@ export const TYPES = [
 ];
 export const CURRENCIES = ["UF", "CLP", "USD"];
 
+// Las 21 comunas de la región de Ñuble (búsqueda con IA).
+export const COMUNAS = [
+  "Chillán", "Chillán Viejo", "Bulnes", "Quillón", "San Ignacio", "El Carmen", "Pemuco",
+  "Yungay", "Pinto", "Coihueco", "San Carlos", "Ñiquén", "San Fabián", "San Nicolás",
+  "Quirihue", "Cobquecura", "Trehuaco", "Coelemu", "Ninhue", "Portezuelo", "Ránquil",
+];
+
 export const googleMapsUrl = (lat, lng) => `https://www.google.com/maps?q=${lat},${lng}`;

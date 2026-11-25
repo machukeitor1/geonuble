@@ -5,6 +5,7 @@ import { useApi } from "../lib/useApi";
 import { usePageTitle } from "../lib/usePageTitle";
 import { OPERATIONS, TYPES } from "../lib/format";
 import "./Home.css";
+import "./AiSearch.css";
 
 const SERVICES = [
   {
@@ -77,6 +78,32 @@ function HeroSearch({ properties }) {
   );
 }
 
+// Búsqueda en lenguaje natural: lleva a /buscar?q=…
+function HeroAiSearch() {
+  const navigate = useNavigate();
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const q = new FormData(e.currentTarget).get("q").trim();
+    if (q) navigate(`/buscar?q=${encodeURIComponent(q)}`);
+  }
+
+  return (
+    <form className="hero-ai-search" onSubmit={handleSubmit} role="search">
+      <label>
+        <span>Busca con tus palabras</span>
+        <input
+          name="q"
+          type="search"
+          maxLength={300}
+          placeholder="Ej: casa de 3 dormitorios en Chillán con patio, hasta 120 millones"
+        />
+      </label>
+      <button type="submit">Buscar con IA</button>
+    </form>
+  );
+}
+
 function Home() {
   usePageTitle(null);
   const settings = useSettings();
@@ -97,6 +124,7 @@ function Home() {
               Te ayudamos a comprar, vender o arrendar con asesoría cercana y conocimiento real de la zona.
             </p>
             <HeroSearch properties={properties} />
+            <HeroAiSearch />
             <p className="hero-secondary">
               ¿Tienes una propiedad? <Link to="/contacto?asunto=Quiero vender">Véndela o arriéndala con nosotros →</Link>
             </p>

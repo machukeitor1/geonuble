@@ -1,0 +1,269 @@
+.ai-search-form {
+  display: flex;
+  gap: 0.5rem;
+  margin: 2rem 0 1.5rem;
+  background: white;
+  border: 1px solid #e3e8ee;
+  border-radius: 12px;
+  padding: 0.4rem;
+  box-shadow: 0 6px 18px rgba(26, 58, 92, 0.08);
+}
+
+.ai-search-form input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  font: inherit;
+  font-size: 1.05rem;
+  padding: 0.7rem 0.9rem;
+  color: #1a3a5c;
+  background: transparent;
+}
+
+.ai-search-form input:focus {
+  outline: none;
+}
+
+.ai-search-form:focus-within {
+  border-color: #f0c040;
+}
+
+.ai-search-form button,
+.ai-search-error button {
+  background: #f0c040;
+  color: #1a3a5c;
+  border: none;
+  border-radius: 9px;
+  padding: 0 1.6rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ai-search-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ai-search-understood {
+  background: #f6f8fb;
+  border: 1px solid #e3e8ee;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+}
+
+.ai-search-label {
+  margin: 0 0 0.7rem;
+  font-weight: 700;
+  color: #1a3a5c;
+}
+
+.ai-search-method {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7a8a;
+  background: white;
+  border: 1px solid #e3e8ee;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: white;
+  border: 1px solid #c9d3de;
+  border-radius: 999px;
+  padding: 0.2rem 0.3rem 0.2rem 0.8rem;
+  font-size: 0.92rem;
+  color: #1a3a5c;
+}
+
+.chip-value {
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+
+.chip-value span {
+  color: #6b7a8a;
+}
+
+.chip-static {
+  cursor: default;
+}
+
+.chip-value:hover:not(.chip-static) {
+  text-decoration: underline;
+}
+
+.chip-remove {
+  border: none;
+  background: #eef2f6;
+  color: #1a3a5c;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chip-remove:hover {
+  background: #f0c040;
+}
+
+.chip-editing {
+  padding: 0.3rem 0.4rem 0.3rem 0.8rem;
+  border-color: #f0c040;
+}
+
+.chip-editing span {
+  color: #6b7a8a;
+}
+
+.chip-editing input,
+.chip-editing select {
+  font: inherit;
+  border: 1px solid #c9d3de;
+  border-radius: 6px;
+  padding: 0.2rem 0.4rem;
+  max-width: 14rem;
+}
+
+.chip-editing button {
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+  background: #1a3a5c;
+  color: white;
+}
+
+.chip-editing .chip-cancel {
+  background: transparent;
+  color: #6b7a8a;
+}
+
+.ai-search-note {
+  margin: 0.7rem 0 0;
+  font-size: 0.9rem;
+  color: #5f6b78;
+}
+
+.ai-search-warning {
+  color: #8a5a00;
+}
+
+.ai-search-count {
+  margin: 1.5rem 0 0;
+  color: #6b7a8a;
+  font-weight: 600;
+}
+
+.ai-search-results.is-loading .properties-grid {
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.ai-search-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #fdf2f2;
+  border: 1px solid #f3caca;
+  color: #8a1f1f;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.ai-search-error p {
+  margin: 0;
+}
+
+.ai-search-error button {
+  padding: 0.5rem 1rem;
+}
+
+/* Campo "Busca con tus palabras" en la portada */
+.hero-ai-search {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  max-width: 720px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 14px;
+  padding: 0.45rem;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  text-shadow: none;
+}
+
+.hero-ai-search label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem 0.8rem;
+  min-width: 0;
+}
+
+.hero-ai-search label span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7a8a;
+}
+
+.hero-ai-search input {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 1rem;
+  color: #1a3a5c;
+  padding: 0.2rem 0;
+}
+
+.hero-ai-search input:focus {
+  outline: none;
+}
+
+.hero-ai-search button {
+  background: #1a3a5c;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0 1.4rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .ai-search-form,
+  .hero-ai-search {
+    flex-direction: column;
+  }
+
+  .ai-search-form button,
+  .hero-ai-search button {
+    padding: 0.75rem;
+  }
+}

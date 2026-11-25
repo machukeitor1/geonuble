@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Properties from "./pages/Properties";
 import PropertyDetail from "./pages/PropertyDetail";
 import Contact from "./pages/Contact";
+import AiSearch from "./pages/AiSearch";
 import NotFound from "./pages/NotFound";
 
 // El panel (admin y corredores) se carga aparte para no pesar en el sitio público.
@@ -33,6 +34,7 @@ function App() {
               <Route path="/propiedades" element={<Properties />} />
               <Route path="/propiedades/:id" element={<PropertyDetail />} />
               <Route path="/contacto" element={<Contact />} />
+              <Route path="/buscar" element={<AiSearch />} />
               <Route path="*" element={<NotFound />} />
             </Route>
             <Route
