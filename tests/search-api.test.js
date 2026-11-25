@@ -80,7 +80,7 @@ test("sin LLM: usa reglas, convierte CLP a UF y relaja precio y características
   assert.equal(data.uf.fuente, "UF_CLP");
   // 120 MM = 3000 UF: solo calza la casa con patio; al relajar entra la de 3.300 UF (≤ 132 MM).
   assert.deepEqual(data.relajados, ["precio ±10%", "características"]);
-  assert.deepEqual(titles(data).sort(), ["Casa con patio y quincho", "Casa simple"]);
+  assert.deepEqual(titles(data), ["Casa con patio y quincho", "Casa simple"], "la que cumple la característica va primero");
   assert.ok(!titles(data).includes("Casa borrador"), "nunca devuelve borradores");
   assert.ok(data.resultados.every((r) => !("embedding" in r)));
 });
