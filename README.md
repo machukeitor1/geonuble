@@ -91,12 +91,12 @@ El visitante escribe lo que busca con sus palabras, por ejemplo *"casa de 3 dorm
 flowchart TD
     Q["Consulta del visitante<br/>(máx. 300 caracteres, 20 por minuto por IP)"] --> C{"¿En caché?"}
     C -->|sí| R[Respuesta]
-    C -->|no| L{"¿LLM configurado?"}
-    L -->|sí| X["LLM con salida estructurada<br/>(Workers AI · Gemini · Ollama)"]
-    L -->|no| P[Parser por reglas en español]
-    X -->|"JSON inválido, error o cuota agotada"| P
-    X --> Z[Validación con zod]
-    P --> Z
+    C -->|no| P[Parser por reglas en español]
+    P --> U{"¿Quedaron palabras que<br/>podrían ser un filtro?"}
+    U -->|"no (lo normal)"| Z[Validación con zod]
+    U -->|"sí, y hay LLM"| X["LLM con salida estructurada<br/>(Workers AI · Gemini · Ollama)"]
+    X -->|"solo campos nuevos,<br/>comprobados en el texto"| Z
+    X -.->|"error o cuota agotada:<br/>quedan las reglas"| Z
     Z --> S["Filtros SQL parametrizados<br/>(solo publicadas, UF ⇄ CLP)"]
     S --> O{"¿Texto descriptivo?"}
     O -->|"sí, con embeddings"| V["Orden por similitud coseno<br/>(pgvector, bge-m3)"]
@@ -114,6 +114,7 @@ flowchart TD
 
 - **SQL para lo exacto.** Comuna, tipo, operación, dormitorios, baños, superficie y precio son condiciones duras: quien pide 3 dormitorios no quiere ver un monoambiente porque "se parece". Se filtran con consultas parametrizadas, sin concatenar nunca texto del usuario.
 - **Vectores para lo descriptivo.** "Luminosa", "tranquila" o "cerca del centro" no son columnas. Ese resto de la consulta (`texto_semantico`) se convierte en un embedding y ordena los resultados por similitud con el título, la descripción y las características de cada propiedad.
+- **Reglas primero, LLM como complemento.** Las reglas entienden casi todo en 1 ms. El LLM solo se consulta cuando quedan palabras que podrían ser un filtro y las reglas no conocen ("condominio", "frutales", "sauna"); las palabras descriptivas ("luminosa", "cerca del colegio") van directo a los embeddings. De su respuesta solo se aceptan campos que las reglas no encontraron y que se pueden comprobar en el texto: una comuna solo si está escrita, un número solo si la consulta tiene números, una característica solo si aparece en la consulta. La operación nunca viene del LLM. Así el modelo puede agregar, pero no empeorar lo que las reglas ya hicieron bien.
 - **El LLM solo traduce.** No decide qué propiedades existen ni las inventa: convierte el texto en un JSON con un esquema cerrado (tipos y comunas del catálogo), que se valida con zod antes de tocar la base.
 
 ### Proveedores (todos con plan gratis)
@@ -121,6 +122,7 @@ flowchart TD
 | Pieza | Variable | Opciones | Por defecto |
 |---|---|---|---|
 | Extracción de filtros | `LLM_PROVIDER` | `workers-ai`, `gemini`, `ollama` | `@cf/meta/llama-3.1-8b-instruct` · `gemini-3.5-flash-lite` · `llama3.1:8b` |
+| Uso del LLM | `LLM_MODE` | `complemento` (reglas primero) o `principal` (el LLM interpreta todo) | `complemento` |
 | Embeddings | `EMBEDDINGS_PROVIDER` | `workers-ai`, `ollama` | `@cf/baai/bge-m3` (multilingüe, 1024 dimensiones) |
 | Valor de la UF | `CMF_API_KEY` | CMF (oficial) o mindicador.cl (sin clave) | mindicador.cl, guardado 12 h en `settings` |
 | Plan B | — | Parser por reglas en español | Siempre disponible |
@@ -134,19 +136,24 @@ Sin ninguna variable configurada la búsqueda **funciona igual** con el parser p
 
 `tests/search-evals.json` tiene **30 consultas realistas de Ñuble** con los filtros esperados y las propiedades que deberían salir entre las 5 primeras, sobre 21 propiedades ficticias (`tests/fixtures/properties.json`). `npm run eval:search` las corre en una base temporal con la UF fija y compara el parser por reglas con el LLM configurado:
 
-| Métrica | Parser por reglas | Llama 3.1 8B | Llama 3.3 70B |
-|---|---:|---:|---:|
-| Filtros correctos (todos los campos) | **97,7%** | 79,2% | 95,5% |
-| Consultas con todos los filtros correctos | **93,3%** | 50,0% | 90,0% |
-| Características correctas | 81,8% | 57,1% | **84,6%** |
-| Recall@5 | **96,6%** | 94,0% | **96,6%** |
-| Respuestas inválidas (cae a reglas) | — | 0 de 30 | 0 de 30 |
-| Latencia de interpretación (prom. / p95) | **1 ms / 10 ms** | 517 ms / 913 ms | 2.108 ms / 4.021 ms |
-| Latencia total de la búsqueda (prom.) | **85 ms** | 596 ms | 2.175 ms |
-| Tokens por búsqueda (entrada / salida) | — | 907 / 33 | 907 / 38 |
-| Búsquedas diarias con la cuota gratis | ilimitadas | ~2.000 (≈5 neurons) | ~310 (≈32 neurons) |
+| Métrica | Reglas | Híbrido 8B | Híbrido 70B | LLM principal 8B | LLM principal 70B |
+|---|---:|---:|---:|---:|---:|
+| Filtros correctos (todos los campos) | 97,7% | **100%** | **100%** | 79,2% | 95,5% |
+| Consultas con todos los filtros correctos | 93,3% | **100%** | **100%** | 50,0% | 90,0% |
+| Características correctas | 81,8% | **100%** | **100%** | 57,1% | 84,6% |
+| Recall@5 | **96,6%** | **96,6%** | **96,6%** | 94,0% | **96,6%** |
+| Consultas que llaman al LLM | 0 de 30 | 5 de 30 | 5 de 30 | 30 de 30 | 30 de 30 |
+| Latencia de interpretación (prom. / p95) | **1 ms / 2 ms** | 83 ms / 566 ms | 361 ms / 1.605 ms | 517 ms / 913 ms | 2.108 ms / 4.021 ms |
+| Latencia total de la búsqueda (prom.) | **~95 ms** | 188 ms | 443 ms | 596 ms | 2.175 ms |
+| Búsquedas diarias con la cuota gratis | ilimitadas | ~12.500 | ~1.900 | ~2.000 | ~310 |
 
-Medido el 25-11-2026 en Workers AI (`@cf/meta/llama-3.1-8b-instruct` y `@cf/meta/llama-3.3-70b-instruct-fp8-fast`), con embeddings bge-m3 en todas las columnas. Costo en dinero: $0 en todos los casos (plan gratis).
+Medido el 25-11-2026 en Workers AI (`@cf/meta/llama-3.1-8b-instruct` y `@cf/meta/llama-3.3-70b-instruct-fp8-fast`), con embeddings bge-m3 en todas las columnas. Costo en dinero: $0 en todos los casos (plan gratis). Los modos se comparan con `npm run eval:search -- --modos=reglas,llm,hibrido`.
+
+**Qué muestra:** el modo híbrido se queda con lo mejor de cada parte. Las reglas resuelven 25 de las 30 consultas sin llamar a nadie, y el LLM solo entra en las 5 con palabras que las reglas no conocen ("condominio", "frutales", "cabaña", "camiones" y un intento de inyección), donde aporta las características que faltaban sin tocar lo demás. El único error que queda ("busco algo tranquilo en el campo, con pozo") viene de las reglas, que leen "campo" como tipo; el híbrido no lo corrige porque nunca reemplaza lo que entendieron las reglas.
+
+**Configuración recomendada:** reglas + embeddings + LLM como complemento (`LLM_PROVIDER=workers-ai`, `LLM_MODE` sin definir o `complemento`). Entre los dos modelos rinden igual en este set; el 70B es más robusto con palabras desconocidas (justo los casos donde se usa) y su cuota alcanza para ~1.900 búsquedas diarias, de sobra para el sitio. El 8B es la alternativa si el tráfico crece.
+
+**Cuidado con el 100%:** este set lo escribió el mismo autor de las reglas y de la lista de palabras descriptivas, así que el resultado es optimista. Lo que confirma o desmiente el diseño son consultas reales de visitantes.
 
 **El prompt importó tanto como el modelo.** Con la primera versión, los dos modelos copiaban en `texto_semantico` el ejemplo del propio prompt, agregaban `operacion: "venta"` sin que la consulta lo dijera e inventaban comunas. La segunda versión exige que `operacion` y `comuna` aparezcan escritas en la consulta, prohíbe agregar palabras que la consulta no dice y trae dos ejemplos que no se parecen al set de evaluación. Resultado:
 
@@ -155,20 +162,20 @@ Medido el 25-11-2026 en Workers AI (`@cf/meta/llama-3.1-8b-instruct` y `@cf/meta
 | 8B, primer prompt → prompt actual | 55,8% → 79,2% | 13,3% → 50,0% | 73,3% → 94,0% | 7 → 0 |
 | 70B, primer prompt → prompt actual | 87,1% → 95,5% | 70,0% → 90,0% | 92,2% → 96,6% | 1 → 0 |
 
-**Qué muestra:** el 70B queda prácticamente a la par de las reglas (mismo recall@5, 2 puntos menos en filtros) y es el único que entiende características que las reglas no conocen ("condominio", "frutales"). Sus errores restantes: en una consulta dejó el precio dentro de `texto_semantico` y en otra tradujo "para camiones" como "estacionamiento". El 8B sigue convirtiendo frases en características ("vista a la cordillera", "grande") y confunde tipos ("3d2b" → Departamento). Las reglas siguen siendo ~25 veces más rápidas y no tienen límite diario, por eso la configuración en producción es **reglas para los filtros + embeddings para el orden** (`EMBEDDINGS_PROVIDER=workers-ai`, sin `LLM_PROVIDER`). El 70B es la opción si las consultas reales de visitantes resultan más variadas que este set.
+**En modo principal**, sin reglas delante, el 70B queda cerca de las reglas pero tarda ~2 s por búsqueda; sus errores fueron dejar un precio dentro de `texto_semantico` y traducir "para camiones" como "estacionamiento". El 8B convierte frases en características ("vista a la cordillera", "grande") y confunde tipos ("3d2b" → Departamento).
 
 **Ojo con el sesgo:** las consultas las escribió el mismo autor del parser, así que el resultado de las reglas es optimista; lo que más importa es comparar con consultas reales de visitantes. Los errores del parser están en características que no conoce ("condominio", "frutales") y en consultas vagas ("algo tranquilo en el campo").
 
 ### Costo y cuota
 
-- **Workers AI:** 10.000 neurons gratis al día (se reinician a las 00:00 UTC). Con los precios publicados de `llama-3.1-8b-instruct-fp8-fast` como referencia (4.119 neurons por millón de tokens de entrada y 34.868 de salida), una extracción de ~700 tokens de entrada y ~40 de salida usa ≈4 neurons, y el embedding de la consulta (bge-m3, 1.075 neurons por millón) es despreciable: **del orden de 2.000 búsquedas diarias gratis**. El eval imprime el valor medido.
+- **Workers AI:** 10.000 neurons gratis al día (se reinician a las 00:00 UTC). Con los precios publicados de `llama-3.1-8b-instruct-fp8-fast` como referencia (4.119 neurons por millón de tokens de entrada y 34.868 de salida), una extracción de ~700 tokens de entrada y ~40 de salida usa ≈4 neurons, y el embedding de la consulta (bge-m3, 1.075 neurons por millón) es despreciable: **del orden de 2.000 búsquedas diarias gratis** si el LLM interpreta todo. En modo complemento solo ~1 de cada 6 búsquedas llama al LLM: ~12.500 diarias con el 8B o ~1.900 con el 70B. El eval imprime el valor medido.
 - **Gemini Flash-Lite:** gratis dentro de los límites del plan (por proyecto; se reinician a medianoche hora del Pacífico).
 - **Ollama:** local, sin costo; útil para correr los evals.
 - Si se agota la cuota (o ante cualquier error del proveedor), la búsqueda sigue con el parser por reglas y lo avisa en la respuesta.
 
 ### Configuración
 
-1. **Cloudflare Workers AI:** en el panel de Cloudflare copia tu *Account ID* y crea un token en **My Profile → API Tokens** con el permiso **Workers AI** (solo ese). Define `CF_ACCOUNT_ID`, `CF_AI_TOKEN` y `EMBEDDINGS_PROVIDER=workers-ai`. Agrega `LLM_PROVIDER` solo si el eval muestra que el modelo mejora a las reglas (ver resultados arriba).
+1. **Cloudflare Workers AI:** en el panel de Cloudflare copia tu *Account ID* y crea un token en **My Profile → API Tokens** con el permiso **Workers AI** (solo ese). Define `CF_ACCOUNT_ID`, `CF_AI_TOKEN` y `EMBEDDINGS_PROVIDER=workers-ai`. Para el complemento con IA agrega `LLM_PROVIDER=workers-ai` y `LLM_MODEL=@cf/meta/llama-3.3-70b-instruct-fp8-fast` (`LLM_MODE` queda en `complemento` por defecto).
 2. **Base de datos:** `npm run db:setup` activa `pgvector` en Neon y agrega las columnas `embedding` y `embedding_hash` (se puede correr de nuevo sin riesgo). Luego `npm run embed:backfill` genera los embeddings de las propiedades existentes.
 3. **En local:** `npm run seed:demo` carga las propiedades ficticias en `.data/` para probar `/buscar`. Si vienes de una versión anterior, borra `.data/` (PGlite 0.6 no abre bases creadas con 0.5).
 4. **Evals sin gastar cuota:** con [Ollama](https://ollama.com) instalado, `ollama pull llama3.1:8b` y `ollama pull bge-m3`, define `LLM_PROVIDER=ollama` y `EMBEDDINGS_PROVIDER=ollama`, y corre `npm run eval:search -- --detalle`.
@@ -226,6 +233,7 @@ Copia [`.env.example`](.env.example) a `.env.local`. **Nunca subas `.env.local` 
 | `NOTIFY_EMAIL` | No | Destino del aviso; si falta, se usa el email de la empresa |
 | `MAIL_FROM` | No | Remitente, requiere dominio verificado en Resend |
 | `LLM_PROVIDER`, `LLM_MODEL` | No | Modelo que extrae los filtros de la búsqueda con IA |
+| `LLM_MODE` | No | `complemento` (por defecto: reglas primero) o `principal` |
 | `CF_ACCOUNT_ID`, `CF_AI_TOKEN` | No | Cloudflare Workers AI (token solo con permiso de Workers AI) |
 | `GEMINI_API_KEY` | No | Si `LLM_PROVIDER=gemini` |
 | `EMBEDDINGS_PROVIDER`, `EMBEDDINGS_MODEL`, `EMBEDDINGS_DIM` | No | Embeddings para ordenar por similitud (bge-m3, 1024) |
