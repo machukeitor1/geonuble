@@ -78,6 +78,7 @@ test("sin LLM: usa reglas, convierte CLP a UF y relaja precio y características
   const { status, data } = await post({ q: "casa de 3 dormitorios en Chillán con patio, hasta 120 millones" });
   assert.equal(status, 200);
   assert.equal(data.metodo, "reglas");
+  assert.equal(data.ia, "desactivada");
   assert.deepEqual(data.filtros_aplicados.caracteristicas, ["patio"]);
   assert.equal(data.uf.fuente, "UF_CLP");
   // 120 MM = 3000 UF: solo calza la casa con patio; al relajar entra la de 3.300 UF (≤ 132 MM).
@@ -167,6 +168,7 @@ test("complemento: si las reglas entienden todo, no llama al LLM", async () => {
     llm(() => assert.fail("no debía llamar al LLM"));
     const { data } = await post({ q: "casa luminosa cerca del centro en Chillán" });
     assert.equal(data.metodo, "reglas");
+    assert.equal(data.ia, "no_necesaria");
     assert.equal(extractCalls.length, 0);
     assert.deepEqual(data.avisos, []);
   } finally {
@@ -210,6 +212,7 @@ test("complemento: palabras desconocidas activan el LLM; si falla quedan las reg
     const { data } = await post({ q: "parcela en Pinto con frutales" });
     assert.equal(extractCalls.length, 1);
     assert.equal(data.metodo, "reglas");
+    assert.equal(data.ia, "fallo:cuota", "el fallo silencioso queda visible para diagnosticar");
     assert.deepEqual(data.avisos, []);
     assert.deepEqual(titles(data), ["Parcela de agrado"]);
 
@@ -217,6 +220,7 @@ test("complemento: palabras desconocidas activan el LLM; si falla quedan las reg
     llm(() => ({ raw: { caracteristicas: ["frutales"], texto_semantico: "" }, usage: {} }));
     const ok = await post({ q: "parcela en Pinto con frutales" });
     assert.equal(ok.data.metodo, "reglas+ia");
+    assert.equal(ok.data.ia, "aporto");
     assert.deepEqual(ok.data.filtros_aplicados.caracteristicas, ["frutales"]);
     assert.equal(ok.data.filtros_aplicados.comuna, "Pinto");
   } finally {

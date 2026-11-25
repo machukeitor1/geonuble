@@ -180,6 +180,8 @@ Medido el 25-11-2026 en Workers AI (`@cf/meta/llama-3.1-8b-instruct` y `@cf/meta
 3. **En local:** `npm run seed:demo` carga las propiedades ficticias en `.data/` para probar `/buscar`. Si vienes de una versión anterior, borra `.data/` (PGlite 0.6 no abre bases creadas con 0.5).
 4. **Evals sin gastar cuota:** con [Ollama](https://ollama.com) instalado, `ollama pull llama3.1:8b` y `ollama pull bge-m3`, define `LLM_PROVIDER=ollama` y `EMBEDDINGS_PROVIDER=ollama`, y corre `npm run eval:search -- --detalle`.
 
+5. **Comprobar que el LLM responde:** cada respuesta de `POST /api/search` trae el campo `ia`: `desactivada` (falta `LLM_PROVIDER`), `no_necesaria` (las reglas entendieron todo), `aporto`, `sin_aporte` o `fallo:<motivo>` (`cuota`, `error`, `respuesta_invalida`, `sin_configuracion`). Una consulta como "casa en condominio" debería dar `aporto`.
+
 ### Límites conocidos
 
 - El caché de respuestas y el rate limit viven en memoria: en Vercel valen por instancia, no globalmente.
