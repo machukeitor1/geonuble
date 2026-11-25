@@ -20,9 +20,13 @@ import { _setUfFetch } from "../lib/uf.js";
 export const EVALS = JSON.parse(readFileSync(new URL("../tests/search-evals.json", import.meta.url), "utf8"));
 export const FIELDS = ["operacion", "tipo", "comuna", "precio_min", "precio_max", "moneda", "dormitorios_min", "banos_min", "superficie_min", "caracteristicas"];
 
-// Referencia de Workers AI (neurons por millón de tokens, llama-3.1-8b-instruct-fp8-fast).
-const NEURONS_IN = 4119;
-const NEURONS_OUT = 34868;
+// Neurons por millón de tokens [entrada, salida] según la página de precios de Workers AI.
+// Para llama-3.1-8b-instruct (sin precio publicado) se usa el de su variante fp8-fast.
+const NEURONS = {
+  "@cf/meta/llama-3.1-8b-instruct": [4119, 34868],
+  "@cf/meta/llama-3.1-8b-instruct-fp8-fast": [4119, 34868],
+  "@cf/meta/llama-3.3-70b-instruct-fp8-fast": [26668, 204805],
+};
 const FREE_NEURONS_PER_DAY = 10000;
 
 function sameFeatures(expected, got) {
@@ -140,8 +144,9 @@ function costLabel(result, config) {
   if (!config) return "$0 (sin LLM)";
   if (config.provider === "ollama") return "$0 (local)";
   if (result.tokensIn === null) return "$0 (plan gratis)";
-  if (config.provider === "workers-ai") {
-    const neurons = (result.tokensIn * NEURONS_IN + result.tokensOut * NEURONS_OUT) / 1e6;
+  if (config.provider === "workers-ai" && NEURONS[config.model]) {
+    const [rateIn, rateOut] = NEURONS[config.model];
+    const neurons = (result.tokensIn * rateIn + result.tokensOut * rateOut) / 1e6;
     return `$0 (plan gratis) · ≈${neurons.toFixed(1)} neurons → ~${Math.floor(FREE_NEURONS_PER_DAY / neurons)} búsquedas/día`;
   }
   return "$0 (plan gratis)";
