@@ -3,6 +3,7 @@
 //
 //   npm run eval:search                 reglas + LLM (si LLM_PROVIDER está configurado)
 //   npm run eval:search -- --detalle    además lista los errores de cada consulta
+//   npm run eval:search -- --modos=reglas,hibrido   solo esos modos (ahorra cuota)
 //
 // Con LLM_PROVIDER=ollama y EMBEDDINGS_PROVIDER=ollama corre sin gastar cuota.
 // Mide: acierto por campo, consultas exactas, recall@5, latencia y costo estimado.
@@ -12,7 +13,7 @@ import { pathToFileURL } from "node:url";
 import { seed } from "./seed-demo.js";
 import { parseRules } from "../lib/search/rules.js";
 import { filtersSchema, fold } from "../lib/search/filters.js";
-import { runSearch, _clearSearchCaches } from "../lib/search/search.js";
+import { runSearch, interpret, _clearSearchCaches } from "../lib/search/search.js";
 import { embedPending } from "../lib/search/embeddings.js";
 import { extractWithLlm, llmConfig, embeddingsConfig, embeddingsEnabled, llmEnabled } from "../lib/search/providers.js";
 import { _setUfFetch } from "../lib/uf.js";
@@ -85,10 +86,19 @@ export async function evaluate(method) {
     let scored;
     let fallo = null;
     let usage = null;
+    let llamoLlm = false;
     if (method === "reglas") {
       filtros = parseRules(c.q);
       scored = filtros;
+    } else if (method === "hibrido") {
+      // Igual que en producción con LLM_MODE=complemento.
+      const out = await interpret(c.q, "complemento");
+      filtros = out.filtros;
+      scored = filtros;
+      usage = out.llm?.usage ?? null;
+      llamoLlm = out.llamoLlm;
     } else {
+      llamoLlm = true;
       try {
         const out = await extractWithLlm(c.q);
         usage = out.usage;
@@ -108,7 +118,7 @@ export async function evaluate(method) {
     const top5 = resultados.slice(0, 5).map((r) => refById[r.id]);
     const { fields, exact } = scoreFilters(c.filtros, scored, c.opcionales);
     const recall = c.relevantes.length ? c.relevantes.filter((r) => top5.includes(r)).length / c.relevantes.length : null;
-    rows.push({ q: c.q, fields, exact, recall, top5, expected: c.relevantes, interpretMs, totalMs, fallo, usage, got: scored });
+    rows.push({ q: c.q, fields, exact, recall, top5, expected: c.relevantes, interpretMs, totalMs, fallo, usage, llamoLlm, got: scored });
   }
   return summarize(rows);
 }
@@ -132,6 +142,7 @@ function summarize(rows) {
     interpretP95: p95(rows.map((r) => r.interpretMs)),
     totalAvg: avg(rows.map((r) => r.totalMs)),
     fallos: rows.filter((r) => r.fallo).length,
+    llmCalls: rows.filter((r) => r.llamoLlm).length,
     tokensIn: usages.length ? avg(usages.map((u) => u.input)) : null,
     tokensOut: usages.length ? avg(usages.map((u) => u.output ?? 0)) : null,
   };
@@ -146,7 +157,9 @@ function costLabel(result, config) {
   if (result.tokensIn === null) return "$0 (plan gratis)";
   if (config.provider === "workers-ai" && NEURONS[config.model]) {
     const [rateIn, rateOut] = NEURONS[config.model];
-    const neurons = (result.tokensIn * rateIn + result.tokensOut * rateOut) / 1e6;
+    // Promedio por búsqueda: en modo híbrido solo una parte de las consultas llama al LLM.
+    const share = result.llmCalls / result.rows.length;
+    const neurons = ((result.tokensIn * rateIn + result.tokensOut * rateOut) / 1e6) * share;
     return `$0 (plan gratis) · ≈${neurons.toFixed(1)} neurons → ~${Math.floor(FREE_NEURONS_PER_DAY / neurons)} búsquedas/día`;
   }
   return "$0 (plan gratis)";
@@ -165,6 +178,7 @@ export function table(results) {
     line("Recall@5", (r) => pct(r.recallAt5)),
     line("Latencia de interpretación (prom. / p95)", (r) => `${ms(r.interpretAvg)} / ${ms(r.interpretP95)}`),
     line("Latencia total de la búsqueda (prom.)", (r) => ms(r.totalAvg)),
+    line("Consultas que llamaron al LLM", (r) => (r.method === "reglas" ? "—" : `${r.llmCalls}/${r.rows.length}`)),
     line("Fallos del LLM (cae a reglas)", (r) => (r.method === "llm" ? `${r.fallos}/${r.rows.length}` : "—")),
     line("Tokens por consulta (entrada / salida)", (r) => (r.tokensIn === null ? "—" : `${Math.round(r.tokensIn)} / ${Math.round(r.tokensOut)}`)),
     line("Costo por consulta", (r) => r.cost),
@@ -179,13 +193,27 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   console.log(`Eval de búsqueda: ${EVALS.consultas.length} consultas, ${emb ? `embeddings ${emb.provider}/${emb.model}` : "orden por palabras (sin embeddings)"}, UF fija $${EVALS.uf_clp}`);
   await prepare();
 
+  // --modos=reglas,llm,hibrido (por defecto, todos los disponibles)
+  const modesArg = process.argv.find((a) => a.startsWith("--modos="));
+  const modes = modesArg ? modesArg.slice(8).split(",") : ["reglas", "llm", "hibrido"];
+
   const results = {};
-  const rules = await evaluate("reglas");
-  results["Parser por reglas"] = { ...rules, method: "reglas", cost: "$0" };
+  if (modes.includes("reglas")) {
+    const rules = await evaluate("reglas");
+    results["Parser por reglas"] = { ...rules, method: "reglas", cost: "$0" };
+  }
   if (llm) {
-    console.log(`Consultando ${llm.provider}/${llm.model}…`);
-    const llmResult = await evaluate("llm");
-    results[`LLM (${llm.provider}: ${llm.model})`] = { ...llmResult, method: "llm", cost: costLabel(llmResult, llm) };
+    const short = llm.model.split("/").pop();
+    if (modes.includes("llm")) {
+      console.log(`LLM principal: ${llm.provider}/${llm.model}…`);
+      const r = await evaluate("llm");
+      results[`LLM principal (${short})`] = { ...r, method: "llm", cost: costLabel(r, llm) };
+    }
+    if (modes.includes("hibrido")) {
+      console.log(`Híbrido (reglas + ${llm.model} como complemento)…`);
+      const r = await evaluate("hibrido");
+      results[`Híbrido (${short})`] = { ...r, method: "hibrido", cost: costLabel(r, llm) };
+    }
   } else {
     console.log("Sin LLM_PROVIDER: solo se evalúa el parser por reglas.");
   }
