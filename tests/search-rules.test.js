@@ -76,3 +76,9 @@ test("filtersSchema: rechaza tipo o comuna fuera del catálogo y normaliza", () 
   assert.deepEqual(ok, { tipo: "Casa", comuna: "Chillán Viejo", precio_max: 120e6, moneda: "CLP", texto_semantico: "" });
   assert.equal(filtersSchema.safeParse({ precio_min: 10, precio_max: 5, texto_semantico: "" }).success, false);
 });
+
+test("reglas: 'cerca' solo (el lugar era la comuna) no queda como descripción", () => {
+  assert.equal(parseRules("parcela con piscina cerca de Chillán hasta 150 millones").texto_semantico, "");
+  assert.equal(parseRules("casa junto a Bulnes").texto_semantico, "");
+  assert.equal(parseRules("depto cerca de la universidad").texto_semantico, "cerca universidad", "con lugar, sí describe");
+});
