@@ -2,6 +2,7 @@ import { handle, json, readJson, text, numberOrNull, intOrNull, getId, HttpError
 import { query } from "../lib/db.js";
 import { getUser, requireAdmin } from "../lib/auth.js";
 import { deleteImage } from "../lib/storage.js";
+import { PROPERTY_FIELDS } from "../lib/schema.js";
 
 const STATUSES = ["draft", "published", "sold"];
 
@@ -13,13 +14,13 @@ export const GET = handle(async (request) => {
   const filter = onlyPublished ? "status = 'published'" : "TRUE";
 
   if (params.has("id")) {
-    const [property] = await query(`SELECT * FROM properties WHERE id = $1 AND ${user ? "TRUE" : filter}`, [getId(request)]);
+    const [property] = await query(`SELECT ${PROPERTY_FIELDS} FROM properties WHERE id = $1 AND ${user ? "TRUE" : filter}`, [getId(request)]);
     if (!property) throw new HttpError(404, "Propiedad no encontrada");
     return json(property);
   }
 
   return json(
-    await query(`SELECT * FROM properties WHERE ${filter} ORDER BY featured DESC, created_at DESC`)
+    await query(`SELECT ${PROPERTY_FIELDS} FROM properties WHERE ${filter} ORDER BY featured DESC, created_at DESC`)
   );
 });
 
@@ -70,7 +71,7 @@ export const POST = handle(async (request) => {
   const values = readProperty(await readJson(request));
   const [property] = await query(
     `INSERT INTO properties (${COLUMNS}) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-      $11, $12, $13, $14, $15, $16::jsonb, $17::jsonb, $18, $19) RETURNING *`,
+      $11, $12, $13, $14, $15, $16::jsonb, $17::jsonb, $18, $19) RETURNING ${PROPERTY_FIELDS}`,
     values
   );
   return json(property, 201);
@@ -86,7 +87,7 @@ export const PUT = handle(async (request) => {
 
   const [property] = await query(
     `UPDATE properties SET (${COLUMNS}, updated_at) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-      $11, $12, $13, $14, $15, $16::jsonb, $17::jsonb, $18, $19, now()) WHERE id = $20 RETURNING *`,
+      $11, $12, $13, $14, $15, $16::jsonb, $17::jsonb, $18, $19, now()) WHERE id = $20 RETURNING ${PROPERTY_FIELDS}`,
     [...values, id]
   );
 

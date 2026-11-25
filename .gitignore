@@ -25,6 +25,7 @@ dist-ssr
 
 # Datos locales de desarrollo
 .data
+.data-*
 public/uploads
 .env
 .env.local

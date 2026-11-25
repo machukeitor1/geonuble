@@ -129,9 +129,11 @@ test("properties: CRUD admin y visibilidad pública", async () => {
     body: { title: "Casa publicada", status: "published", features: ["Piscina", "", 3], images: [{ url: "/x.jpg" }, null, { url: 5 }] } });
   pubId = pub.data.id;
   assert.deepEqual(pub.data.images, [{ url: "/x.jpg", thumb: "/x.jpg" }]);
+  assert.ok(!("embedding" in pub.data) && !("embedding_hash" in pub.data), "no expone el embedding");
   assert.equal((await call(properties, "/properties", { method: "POST", cookie: adminCookie, body: { title: "  " } })).status, 400);
 
   const anon = (await call(properties, "/properties")).data;
+  assert.ok(anon.every((p) => !("embedding" in p)));
   assert.deepEqual(anon.map((p) => p.id), [pubId]);
   assert.equal((await call(properties, `/properties?id=${draftId}`)).status, 404);
   assert.equal((await call(properties, `/properties?id=${draftId}`, { cookie: brokerCookie })).status, 200);
