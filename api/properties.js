@@ -3,6 +3,7 @@ import { query } from "../lib/db.js";
 import { getUser, requireAdmin } from "../lib/auth.js";
 import { deleteImage } from "../lib/storage.js";
 import { PROPERTY_FIELDS } from "../lib/schema.js";
+import { syncPropertyEmbedding } from "../lib/search/embeddings.js";
 
 const STATUSES = ["draft", "published", "sold"];
 
@@ -74,6 +75,7 @@ export const POST = handle(async (request) => {
       $11, $12, $13, $14, $15, $16::jsonb, $17::jsonb, $18, $19) RETURNING ${PROPERTY_FIELDS}`,
     values
   );
+  await syncPropertyEmbedding(property);
   return json(property, 201);
 });
 
@@ -95,6 +97,8 @@ export const PUT = handle(async (request) => {
   const kept = new Set(property.images.flatMap((img) => [img.key, img.thumbKey]));
   const removed = before.images.flatMap((img) => [img.key, img.thumbKey]).filter((k) => k && !kept.has(k));
   await Promise.all(removed.map(deleteImage));
+  // Solo recalcula el embedding si cambió el texto (título, descripción, etc.).
+  await syncPropertyEmbedding(property);
 
   return json(property);
 });
